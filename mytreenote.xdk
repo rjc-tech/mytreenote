@@ -3,23 +3,15 @@
     "projectSettingsVersion": "3.0.0",
     "creationData": {
       "projectTypeName": "com.intel.xdk.projecttype.jsapp",
-      "src": "jsapp/template-tab-view-js/sample.zip",
-      "projectGuid": "d6f66dc7-fe16-4154-a522-95105ef2ba26",
-      "lastModifiedDate": 1492571536086,
-      "creationDate": 1492569372342
+      "src": "jsapp/template-side-menu-js/sample.zip",
+      "projectGuid": "2b417299-1a9d-4c80-a041-2a56ae346317",
+      "lastModifiedDate": 1492593814205,
+      "creationDate": 1492593799892
     },
     "sourceDirectory": "www",
     "cordovaPluginsDirectory": "plugins",
     "startFile": "index.html",
-    "projectFiles": {
-      "xdk-publish-meta-data.json": {
-        "settings": {
-          "project": {
-            "XDK-not-deployed": "True"
-          }
-        }
-      }
-    },
+    "projectFiles": {},
     "projectDirectories": {
       "www/xdk": {
         "settings": {
@@ -140,7 +132,7 @@
         "appName_": "mytreenote",
         "appID_": "not.yet.specified",
         "appAccess_": {
-          "mode": "whitelist",
+          "mode": "legacy",
           "network": [
             "*"
           ],
@@ -154,8 +146,7 @@
             "itms:*",
             "itms-apps:*"
           ],
-          "navigation": [],
-          "properties": {}
+          "navigation": []
         },
         "icons_": [],
         "splashes_": [],
@@ -177,7 +168,7 @@
         "appName_": "mytreenote",
         "appID_": "not.yet.specified",
         "appAccess_": {
-          "mode": "whitelist",
+          "mode": "legacy",
           "network": [
             "*"
           ],
@@ -189,8 +180,7 @@
             "mailto:*",
             "geo:*"
           ],
-          "navigation": [],
-          "properties": {}
+          "navigation": []
         },
         "icons_": [],
         "splashes_": [],
@@ -208,7 +198,7 @@
         "preferences_": {},
         "isActive_": false,
         "certificateId_": "",
-        "appName_": "tab-view-js",
+        "appName_": "side-menu-js",
         "appID_": "not.yet.specified",
         "appAccess_": {
           "mode": "legacy",
@@ -233,7 +223,7 @@
         "preferences_": {},
         "isActive_": false,
         "certificateId_": "",
-        "appName_": "tab-view-js",
+        "appName_": "side-menu-js",
         "appID_": "not.yet.specified",
         "appAccess_": {
           "mode": "legacy",
@@ -283,7 +273,7 @@
         "preferences_": {},
         "isActive_": false,
         "certificateId_": "",
-        "appName_": "tab-view-js",
+        "appName_": "side-menu-js",
         "appID_": "not.yet.specified",
         "appAccess_": {
           "mode": "legacy",
