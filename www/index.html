@@ -1,70 +1,259 @@
 <!DOCTYPE html>
 <!--HTML5 doctype-->
 <html>
-
-<head>
-
+  <head>
     <title>App Framework Kitchen Sink</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, minimal-ui">
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
     <link rel="stylesheet" type="text/css" href="lib/appframework/icons.css" />
     <link rel="stylesheet" type="text/css" href="lib/appframework/af.ui.css" />
-
     <script type="text/javascript" charset="utf-8" src="lib/jquery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
-        
     <script src='cordova.js'></script>
-
-
-</head>
-
-<body>
-    <div id="splashscreen" class='ui-loader heavy'>
-        App Framework
-        <br>
-        <br>
-        <span class='ui-icon ui-icon-loading spin'></span>
-        <h1>Starting app</h1>
+        
+    <script>
+        jQuery(function($){
+            
+            // データの永続保存用ストレージ
+            var g_LocalStorage = localStorage;
+            // 一時リスト作成用ストレージ
+            var g_tempListStorage = sessionStorage;
+            // パンくずリスト作成用ストレージ
+            var g_topicPathListStorage = sessionStorage;
+            
+            // リスト作成
+            window.onload = function(){
+                
+                //-------------------------------------------
+                // ここからテスト↓↓適当なデータを保存する
+                var k = "1";
+                var obj = {
+                    TOPIC_ID:1,
+                    PARENT_TOPIC_ID:"",
+                    ORDER:1,
+                    TOPIC_TEXT:"ルートトピック1",
+                    OPEN_FLG:0,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                var k = "10";
+                var obj = {
+                    TOPIC_ID:10,
+                    PARENT_TOPIC_ID:1,
+                    ORDER:1,
+                    TOPIC_TEXT:"子トピック1-1",
+                    OPEN_FLG:1,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                var k = "2";
+                var obj = {
+                    TOPIC_ID:2,
+                    PARENT_TOPIC_ID:"",
+                    ORDER:1,
+                    TOPIC_TEXT:"ルートトピック2",
+                    OPEN_FLG:0,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                var k = "20";
+                var obj = {
+                    TOPIC_ID:20,
+                    PARENT_TOPIC_ID:2,
+                    ORDER:1,
+                    TOPIC_TEXT:"子トピック2-1",
+                    OPEN_FLG:1,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                var k = "21";
+                var obj = {
+                    TOPIC_ID:21,
+                    PARENT_TOPIC_ID:2,
+                    ORDER:2,
+                    TOPIC_TEXT:"子トピック2-2",
+                    OPEN_FLG:1,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                // ここまでテスト↑↑適当なデータを保存する
+                //-------------------------------------------
+                
+                // パンくずリストと一時リストの作成
+                createTempList();
+                // リスト整形
+                showResult();
+            }
+            
+            
+            // ■■■■■■■■■■■■■■■■■■■■■■■
+            // ■  一時リストを作成する  ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■
+            function createTempList() {
+                
+                // カレントトピック存在フラグ
+                var currentFlg = false;
+                
+                for(var i = 0; i < g_LocalStorage.length; i++){
+                    var json = g_LocalStorage.getItem(g_LocalStorage.key(i));
+                    
+                    // カレントトピックを見つけたらリストの作成
+                    if(json.CURRENT_TOPIC_FLG == 1){
+                        
+                        // カレントトピック配下のトピックのリストを作成していく
+                        var currentTopicId = json.TOPIC_ID;
+                        
+                        for(var a = 0; a < g_LocalStorage.length; a++){
+                            var childJson = g_LocalStorage.getItem(g_LocalStorage.key(a));
+                            
+                            // 子トピックをセッションストレージに追加
+                            if(childJson.TOPIC_ID == currentTopicId){
+                                g_tempListStorage.setItem(a, childJson);
+                            }
+                        }
+                        
+                        // カレントトピックの親を取得しパンくずリストを作成
+                        var parentTopicId = json.PARENT_TOPIC_ID;
+                        
+                        for(var a = 0; a < g_LocalStorage.length; a++){
+                            var parentJson = g_LocalStorage.getItem(g_LocalStorage.key(a));
+                            
+                            // 親トピックをセッションストレージに追加
+                            if(parentJson.TOPIC_ID == parentTopicId){
+                                g_topicPathListStorage.setItem(a, parentJson);
+                            }
+                        }
+                        
+                        $('#currentTopic').innerText(json.TOPIC_TEXT)
+                        currentFlg = true;
+                        break;
+                    }
+                }
+                // カレントトピックが存在しない場合は全てのトピックのリストを作成
+                if(!currentFlg){
+                    for(var i = 0; i < g_LocalStorage.length; i++){
+                        var json = g_LocalStorage.getItem(localStorage.key(i));
+                        g_tempListStorage.setItem(i, json);
+                    }
+                }
+                alert("テスト");
+            }
+            
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■ 保存されているデータをリスト表示する ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            function showResult() {
+                var result = "";
+                if(g_tempListStorage.length > 0){
+                    result = "<ul>";
+                }
+                // 保存されているデータの数だけループしリスト作成
+                for(var i = 0; i < g_sessionStorage.length; i++){
+                    var k = g_tempListStorage.key(i);
+                    var json = g_tempListStorage.getItem(k);
+                    // トピックが展開中か折り畳み中かによって黒丸の表示を変える
+                    var topicSircle = "・";
+                    if(json.OPEN_FLG == 1){
+                        topicSircle = "◎";
+                    }
+                    result += 
+                        '<li><span class="topicSircle"><input type="hidden" name="topicId" value="' + json.TOPIC_ID + '" />' + topicSircle + '</span>' + json.TOPIC_TEXT + '</li>';
+                }
+                if(result != ""){
+                    result += "</ul>";
+                }
+                // リスト表示
+                document.getElementById("show_result").innerHTML = result;
+            }
+            
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■タップした丸点のトピックをカレントトピックにする■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $('.topicSircle').click(function(){
+                var topicId = $('input[name="topicId"]').val;
+                createTempList();
+            });
+            
+            // 【未実装】階層を変更する
+            
+            // 【未実装】子階層の開閉
+            
+            // 【未実装】全子階層の開閉
+            
+            // (ネットのソースをほぼそのまま使用。最初動いてたのだが今動かないのでちょっと保留)トピックがタップされたら編集モードに
+            $('li').click(function(){
+                if(!$(this).hasClass('on')){
+                    $(this).addClass('on');
+                    var txt = $(this).text();
+                    $(this).html('<input type="text" value="' + txt + '" />');
+                    $('li > input').focus().blur(function(){
+                        var inputVal = $(this).val();
+                        $(this).parent().removeClass('on').text(inputVal);
+                    });
+                }
+            });
+            
+            
+            
+            // ■■■■■■■■■■■■■ ■
+            // ■ JSONのソート ■
+            // ■■■■■■■■■■■■■■■
+            function createTempList() {
+            
+        });
+        </script>
+        </head>
+      <body>
+    <div id="splashscreen" class='ui-loader heavy'>App Framework 
+      <br>
+      <br>
+      <span class='ui-icon ui-icon-loading spin'></span>
+      <h1>Starting app</h1>
     </div>
-
     <div class="view splitview">
-        
-        <header>
-            <a class="menuButton" data-left-menu="left" data-transition="cover" style="float:left"></a>
-            <h1>Title</h1>
-        </header>
-        
-        <div class="pages">
-            <div class="panel" id="main" data-title="Main" data-selected="true">
-                This is main page
-            </div>
-            <div class="panel" id="page2" data-title="Page 2">
-                This is Page 2
-            </div>
+      <header>
+        <a class="menuButton" data-left-menu="left" data-transition="cover" style="float:left"></a>
+        <h1>Title</h1>
+      </header>
+      <div class="pages">
+        <div class="panel" id="main" data-title="Main" data-selected="true">
+            <!--パンくずリスト-->
+            <span id="topicPathList"></span><br>
+            <!--カレントトピック-->
+            <span id="currentTopic" style="font-size:large"></span><br>
+            <!--リスト本体-->
+            <span id="show_result"></span><br>
         </div>
-
-        <nav id="left">
-            <div class="view active">
-                <header>
-                    <h1>Left</h1>
-                </header>
-                <div class="pages">
-                    <div class="panel active" id="navPage1" data-title="Foobar">
-                        <ul class="list">
-                            <li><a href="#main" onclick="$.afui.clearHistory()">Main Page</a></li>
-                            <li><a href="#page2" onclick="$.afui.clearHistory()">Page Two</a></li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="panel" id="page2" data-title="Page 2">This is Page 2 </div>
+      </div>
+      <nav id="left">
+        <div class="view active">
+          <header>
+            <h1>Left</h1>
+          </header>
+          <div class="pages">
+            <div class="panel active" id="navPage1" data-title="Foobar">
+              <ul class="list">
+                <li>
+                  <a href="#main" onclick="$.afui.clearHistory()">Main Page</a>
+                </li>
+                <li>
+                  <a href="#page2" onclick="$.afui.clearHistory()">Page Two</a>
+                </li>
+              </ul>
             </div>
-        </nav>
-
+          </div>
+        </div>
+      </nav>
     </div>
-</body>
-
+  </body>
 </html>
