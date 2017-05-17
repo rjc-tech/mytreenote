@@ -37,7 +37,7 @@
                     ORDER:1,
                     TOPIC_TEXT:"ルートトピック1",
                     OPEN_FLG:0,
-                    CURRENT_TOPIC_FLG:0
+                    CURRENT_TOPIC_FLG:1
                 };
                 var v = JSON.stringify(obj);
                 g_LocalStorage.setItem(k, v);
@@ -87,7 +87,6 @@
                 g_LocalStorage.setItem(k, v);
                 // ここまでテスト↑↑適当なデータを保存する
                 //-------------------------------------------
-                alert("ts");
                 // パンくずリストと一時リストの作成
                 createTempList();
                 // リスト整形
@@ -108,7 +107,7 @@
                 for(var i = 0; i < g_LocalStorage.length; i++){                    
                     
                     var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-
+                    
                     // カレントトピックを見つけたらリストの作成
                     if(json["CURRENT_TOPIC_FLG"] == 1){
                         
@@ -120,7 +119,7 @@
                             
                             // 子トピックをセッションストレージに追加
                             if(childJson["TOPIC_ID"] == currentTopicId){
-                                g_tempListStorage.setItem(a, childJson);
+                                g_tempListStorage.setItem(g_LocalStorage.key(a), childJson);
                             }
                         }
                         
@@ -132,11 +131,11 @@
                             
                             // 親トピックをセッションストレージに追加
                             if(parentJson["TOPIC_ID"] == parentTopicId){
-                                g_topicPathListStorage.setItem(a, parentJson);
+                                g_topicPathListStorage.setItem(g_LocalStorage.key(a), parentJson);
                             }
                         }
                         
-                        $('#currentTopic').innerText(json.TOPIC_TEXT)
+                        $('#currentTopic').innerText = json["TOPIC_TEXT"];
                         currentFlg = true;
                         break;
                     }
@@ -144,8 +143,8 @@
                 // カレントトピックが存在しない場合は全てのトピックのリストを作成
                 if(!currentFlg){
                     for(var i = 0; i < g_LocalStorage.length; i++){
-                        var json = g_LocalStorage.getItem(localStorage.key(i));
-                        g_tempListStorage.setItem(i, json);
+                        var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
+                        g_tempListStorage.setItem(localStorage.key(i), json);
                     }
                 }
             }
@@ -161,7 +160,6 @@
                 // 保存されているデータの数だけループしリスト作成
                 for(var i = 0; i < g_tempListStorage.length; i++){
                     var k = g_tempListStorage.key(i);
-                    
                     var json = g_tempListStorage.getItem(k);
                     
                     // トピックが展開中か折り畳み中かによって黒丸の表示を変える
@@ -170,7 +168,7 @@
                         topicSircle = "◎";
                     }
                     result += 
-                        '<li><span class="topicSircle"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span>' + json["TOPIC_TEXT"] +'k→'+k+ '</li>';
+                        '<li><span class="topicSircle"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span>' + json["TOPIC_TEXT"] + 'k→' + k + '</li>';
                 }
                 if(result != ""){
                     result += "</ul>";
