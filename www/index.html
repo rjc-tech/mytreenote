@@ -18,12 +18,14 @@
     <script>
    jQuery(document).ready(function($){ 
             
-            // データの永続保存用ストレージ
-            var g_LocalStorage = localStorage;
-            // 一時リスト作成用ストレージ
-            var g_tempListStorage = sessionStorage;
-            // パンくずリスト
-            var g_topicPathList={};
+       // データの永続保存用ストレージ
+       var g_LocalStorage = localStorage;
+       // 一時リスト作成用ストレージ
+       var g_tempListStorage = sessionStorage;
+       // パンくずリスト
+       var g_topicPathList={};
+       // トピックID一時保存用
+       var g_holdTopic;
             
             // リスト作成
             window.onload = function(){
@@ -134,6 +136,8 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■
             function createTempList() {
                 
+                g_tempListStorage.clear();
+                
                 // カレントトピック存在フラグ
                 var currentFlg = false;
                 
@@ -142,13 +146,13 @@
                     var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
                     // カレントトピックを見つけたらリストの作成
                     if(json["CURRENT_TOPIC_FLG"] == 1){
+                        
                         var currentTopicId = json["TOPIC_ID"];
                         
                         // カレントトピック配下のトピックのリストを作成していく
                         for(var a = 0; a < g_LocalStorage.length; a++){
                             var childJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
                             var childPathList = childJson["PATH"].split("~");
-
                             // カレントトピックのトピックIDがパスに含まれていたら子トピックとして追加
                             for(var b = 0; b < childPathList.length; b++){
                                 if(currentTopicId == childPathList[b]){
@@ -209,7 +213,7 @@
                     // インデント調整
                     var jsonPathList = json["PATH"].split("~");
                     resultTree += 
-                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="moveTopic"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span><span class="topicText">' + json["TOPIC_TEXT"]+'</span></li>';
+                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="moveTopic" data-id="'+json["TOPIC_ID"]+'">' + topicSircle + '</span><span class="topicText" data-id="'+json["TOPIC_ID"]+'">' + json["TOPIC_TEXT"]+'</span></li>';
                     
                 }
                 if(resultTree != ""){
@@ -224,7 +228,7 @@
                 var resultTopic;
                 for (var key in g_topicPathList){
                     var json =JSON.parse(g_topicPathList[key]);                     
-                    resultTopic += '<span class="moveTopic">'+json["TOPIC_TEXT"]+"　</span>";
+                    resultTopic += '<span class="moveTopic" data-id="'+json["TOPIC_ID"]+'">'+json["TOPIC_TEXT"]+"　</span>";
                 }
                 // リスト表示
                 document.getElementById("topicPathList").innerHTML = resultTopic;
@@ -236,19 +240,44 @@
             // ■タップした丸点orパンくずリストのトピックをカレントトピックにする■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click','.moveTopic',function(){
-                // トピックIDをキーに、該当のトピックのカレントトピックフラグを1に更新
-                // 指定がうまくできない…
-                var topicId = $(document).on(this).children('aaaa').val;
-                navigator.notification.alert("topicId→"+topicId);
+                
+                // 現在カレントトピックフラグが1になっているデータを0に更新する
+                for(var i = 0; i < g_LocalStorage.length; i++){
+                    var otherJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+                     
+                    if(otherJson["CURRENT_TOPIC_FLG"]=="1"){
+                        otherJson["CURRENT_TOPIC_FLG"]="0";
+                        g_LocalStorage.setItem(otherJson["TOPIC_ID"],JSON.stringify(otherJson));
+                        break;
+                    }
+                }
+                
+                // トピックIDをキーに、タップされた該当のトピックのカレントトピックフラグを1に更新
+                var topicId = $(this).data("id");
                 var json = JSON.parse(g_LocalStorage.getItem(topicId));
+                
                 json["CURRENT_TOPIC_FLG"]="1";
                 g_LocalStorage.setItem(topicId,JSON.stringify(json));
-                
+ 
                 createTempList();
             });
             
        
-            // 【未実装】階層を変更する
+       // ■■■■■■■■■■■■■■■■■■■■■■■■
+       // ■トピックの階層を一つあげる■
+       // ■■■■■■■■■■■■■■■■■■■■■■■■
+       $(document).on('click','.classUp',function(){
+           for(var i = 0; i < g_LocalStorage.length; i++){
+               var selectTopic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+
+               if(selectTopic["TOPIC_ID"] == g_holdTopic){
+                   selectTopic["CURRENT_TOPIC_FLG"] = "0";
+                   g_LocalStorage.setItem(selectTopic["TOPIC_ID"],JSON.stringify(selectTopic));
+                   break;
+                }
+           }
+       });
+       
             
             // 【未実装】子階層の開閉
             
@@ -259,6 +288,7 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click','.topicText',function(){
                 if(!$(this).hasClass('on')){
+                    g_holdTopic = $(this).data("id");
                     $(this).addClass('on');
                     var txt = $(this).text();
                     $(this).html('<input type="text" value="' + txt + '" />');
@@ -326,7 +356,8 @@
       </header>
       <div class="pages">
         <div class="panel" id="main" data-title="Main" data-selected="true">
-            <span id="testtest"></span><br>
+            <!--階層を上げたり下げたりするボタン-->
+            <span id="classUp">↑</span><span id="classDown">↓</span><br>
             <!--パンくずリスト-->
             <span id="topicPathList"></span><br>
             <!--カレントトピック-->
