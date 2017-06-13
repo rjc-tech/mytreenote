@@ -126,6 +126,9 @@
                 createTempList();
                 // リスト整形
                 showResult();
+                
+                // 吉田作業中
+                allPlus();
             }
             
             
@@ -293,8 +296,36 @@
                     $('#result').append(data[i].number +':'+ data[i].id +'<br />');
                 }
             }
+       
+       
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■ 開閉ボタン機能(行にALL＋付与)   ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            function allPlus(){
+                // ！！！作成中のため動かないです！！！
+                
+                // resultTreeの各行ごとに子トピックスがあるものALL+を付与
+                var classVal = $('.moveTopic').attr('class'); // classの値を取得
+                var classVals = classVal.split(' '); // 取得した値を分割
+                
+                // 子トピックがある場合
+                if(1){
+                    // 行の最後にALL+を追加
+                    $('.moveTopic').append("<b>ALL+</b>");
+                    // 子トピックスが開いてる状態の場合
+                    if(1){
+                        // 子トピックにdisplayON/OFFのスタイルを追加
+                        //　
+                        $('.moveTopic').css("display", "");
+                    }
+                    // テスト用コンソールログ出力
+                    console.log(classVals[i]);
+                }else{
+                    // 子トピックがない
+                }
+            }
+
         });
-        
         
         // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
         // ■ このアプリについて             ■
@@ -303,13 +334,14 @@
             $("#oss1").css("display", "none");
             $("#oss2").css("display", "");
         }
+        // アプリトップに移動する予定
+        // テスト用に初期状態に戻るようにしてある
         function appliTop(){
-            // アプリトップに移動する予定
-            // テスト用に初期状態に戻るようにしてある
             $("#oss1").css("display", "");
             $("#oss2").css("display", "none");   
         }
         
+
         </script>
         </head>
       <body>
