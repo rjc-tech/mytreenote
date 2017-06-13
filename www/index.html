@@ -172,7 +172,7 @@
                             }
                         }
                         
-                        document.getElementById('currentTopic').innerText = json["TOPIC_TEXT"];
+                        document.getElementById('currentTopic').innerHTML = '<span class="topicText">'+json["TOPIC_TEXT"]+'</span>';
                         currentFlg = true;
                         break;
                     }
@@ -209,7 +209,8 @@
                     // インデント調整
                     var jsonPathList = json["PATH"].split("~");
                     resultTree += 
-                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="topicSircle"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span><span class="topicText">' + json["TOPIC_TEXT"]+'</span></li>';
+                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="moveTopic"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span><span class="topicText">' + json["TOPIC_TEXT"]+'</span></li>';
+                    
                 }
                 if(resultTree != ""){
                     resultTree += "</ul>";
@@ -223,7 +224,7 @@
                 var resultTopic;
                 for (var key in g_topicPathList){
                     var json =JSON.parse(g_topicPathList[key]);                     
-                    resultTopic += '<span class="topicSircle">'+json["TOPIC_TEXT"]+"　</span>";
+                    resultTopic += '<span class="moveTopic">'+json["TOPIC_TEXT"]+"　</span>";
                 }
                 // リスト表示
                 document.getElementById("topicPathList").innerHTML = resultTopic;
@@ -234,9 +235,9 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■タップした丸点orパンくずリストのトピックをカレントトピックにする■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $(document).on('click','.topicSircle',function(){
+            $(document).on('click','.moveTopic',function(){
                 // トピックIDをキーに、該当のトピックのカレントトピックフラグを1に更新
-                var topicId = $('input[name="topicId"]').val;
+                var topicId = $(document).on(this).children('aaaa').val;
                 navigator.notification.alert("topicId→"+topicId);
                 var json = JSON.parse(g_LocalStorage.getItem(topicId));
                 json["CURRENT_TOPIC_FLG"]="1";
@@ -252,7 +253,9 @@
             
             // 【未実装】全子階層の開閉
             
-            // トピックがタップされたら編集モードに
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■トピックがタップされたら編集モードに■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click','.topicText',function(){
                 if(!$(this).hasClass('on')){
                     $(this).addClass('on');
