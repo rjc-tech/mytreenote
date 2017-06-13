@@ -14,48 +14,80 @@
     <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
     <script src='cordova.js'></script>
-        
+
     <script>
-        jQuery(function($){
+   jQuery(document).ready(function($){ 
             
             // データの永続保存用ストレージ
             var g_LocalStorage = localStorage;
             // 一時リスト作成用ストレージ
             var g_tempListStorage = sessionStorage;
-            // パンくずリスト作成用ストレージ
-            var g_topicPathListStorage = sessionStorage;
+            // パンくずリスト
+            var g_topicPathList={};
             
             // リスト作成
             window.onload = function(){
                 
                 //-------------------------------------------
                 // ここからテスト↓↓適当なデータを保存する
+                // 階層追加
                 var k = "1";
                 var obj = {
                     TOPIC_ID:1,
                     PARENT_TOPIC_ID:"",
+                    PATH:"/",
                     ORDER:1,
                     TOPIC_TEXT:"ルートトピック1",
                     OPEN_FLG:0,
-                    CURRENT_TOPIC_FLG:1
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-                var k = "10";
-                var obj = {
-                    TOPIC_ID:10,
-                    PARENT_TOPIC_ID:1,
-                    ORDER:1,
-                    TOPIC_TEXT:"子トピック1-1",
-                    OPEN_FLG:1,
                     CURRENT_TOPIC_FLG:0
                 };
                 var v = JSON.stringify(obj);
                 g_LocalStorage.setItem(k, v);
+                
+                var k = "10";
+                var obj = {
+                    TOPIC_ID:10,
+                    PARENT_TOPIC_ID:1,
+                    PATH:"/~1",
+                    ORDER:1,
+                    TOPIC_TEXT:"子トピック1-1",
+                    OPEN_FLG:1,
+                    CURRENT_TOPIC_FLG:1
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                
+                var k = "100";
+                var obj = {
+                    TOPIC_ID:100,
+                    PARENT_TOPIC_ID:10,
+                    PATH:"/~1~10",
+                    ORDER:1,
+                    TOPIC_TEXT:"子トピック1-1-1",
+                    OPEN_FLG:0,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                
+                var k = "101";
+                var obj = {
+                    TOPIC_ID:101,
+                    PARENT_TOPIC_ID:10,
+                    PATH:"/~1~10",
+                    ORDER:2,
+                    TOPIC_TEXT:"子トピック1-1-2",
+                    OPEN_FLG:0,
+                    CURRENT_TOPIC_FLG:0
+                };
+                var v = JSON.stringify(obj);
+                g_LocalStorage.setItem(k, v);
+                
                 var k = "2";
                 var obj = {
                     TOPIC_ID:2,
                     PARENT_TOPIC_ID:"",
+                    PATH:"/",
                     ORDER:1,
                     TOPIC_TEXT:"ルートトピック2",
                     OPEN_FLG:0,
@@ -67,6 +99,7 @@
                 var obj = {
                     TOPIC_ID:20,
                     PARENT_TOPIC_ID:2,
+                    PATH:"/~2",
                     ORDER:1,
                     TOPIC_TEXT:"子トピック2-1",
                     OPEN_FLG:1,
@@ -78,6 +111,7 @@
                 var obj = {
                     TOPIC_ID:21,
                     PARENT_TOPIC_ID:2,
+                    PATH:"/~2",
                     ORDER:2,
                     TOPIC_TEXT:"子トピック2-2",
                     OPEN_FLG:1,
@@ -87,6 +121,7 @@
                 g_LocalStorage.setItem(k, v);
                 // ここまでテスト↑↑適当なデータを保存する
                 //-------------------------------------------
+                
                 // パンくずリストと一時リストの作成
                 createTempList();
                 // リスト整形
@@ -99,43 +134,45 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■
             function createTempList() {
                 
-                // undefind地獄 何かとり方を間違えている？？？？
-                
                 // カレントトピック存在フラグ
                 var currentFlg = false;
                 
                 for(var i = 0; i < g_LocalStorage.length; i++){                    
                     
                     var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-                    
                     // カレントトピックを見つけたらリストの作成
                     if(json["CURRENT_TOPIC_FLG"] == 1){
+                        var currentTopicId = json["TOPIC_ID"];
                         
                         // カレントトピック配下のトピックのリストを作成していく
-                        var currentTopicId = json["TOPIC_ID"];
-
                         for(var a = 0; a < g_LocalStorage.length; a++){
                             var childJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
-                            
-                            // 子トピックをセッションストレージに追加
-                            if(childJson["TOPIC_ID"] == currentTopicId){
-                                g_tempListStorage.setItem(g_LocalStorage.key(a), childJson);
+                            var childPathList = childJson["PATH"].split("~");
+
+                            // カレントトピックのトピックIDがパスに含まれていたら子トピックとして追加
+                            for(var b = 0; b < childPathList.length; b++){
+                                if(currentTopicId == childPathList[b]){
+                                    g_tempListStorage.setItem(g_LocalStorage.key(a), JSON.stringify(childJson));
+                                    break;
+                                } 
                             }
                         }
                         
                         // カレントトピックの親を取得しパンくずリストを作成
-                        var parentTopicId = json.PARENT_TOPIC_ID;
-                        
+                        var parentPathList = json["PATH"].split("~");
+                         
                         for(var a = 0; a < g_LocalStorage.length; a++){
                             var parentJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
-                            
-                            // 親トピックをセッションストレージに追加
-                            if(parentJson["TOPIC_ID"] == parentTopicId){
-                                g_topicPathListStorage.setItem(g_LocalStorage.key(a), parentJson);
+                            // 親トピックをリストに追加
+                            for(var b = 0; b < parentPathList.length; b++){
+                                if(parentJson["TOPIC_ID"] == parentPathList[b]){
+                                    g_topicPathList[g_LocalStorage.key(a)]=JSON.stringify(parentJson);
+                                    break;
+                                } 
                             }
                         }
                         
-                        $('#currentTopic').innerText = json["TOPIC_TEXT"];
+                        document.getElementById('currentTopic').innerText = json["TOPIC_TEXT"];
                         currentFlg = true;
                         break;
                     }
@@ -144,7 +181,7 @@
                 if(!currentFlg){
                     for(var i = 0; i < g_LocalStorage.length; i++){
                         var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
-                        g_tempListStorage.setItem(localStorage.key(i), json);
+                        g_tempListStorage.setItem(localStorage.key(i), JSON.stringify(json));
                     }
                 }
             }
@@ -153,51 +190,75 @@
             // ■ 保存されているデータをリスト表示する ■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             function showResult() {
-                var result = "";
+                
+                // --------------ツリー本体ここから--------------
+                var resultTree = "";
                 if(g_tempListStorage.length > 0){
-                    result = "<ul>";
+                    resultTree = "<ul>";
                 }
                 // 保存されているデータの数だけループしリスト作成
                 for(var i = 0; i < g_tempListStorage.length; i++){
                     var k = g_tempListStorage.key(i);
-                    var json = g_tempListStorage.getItem(k);
+                    var json =JSON.parse(g_tempListStorage.getItem(k));                     
                     
                     // トピックが展開中か折り畳み中かによって黒丸の表示を変える
-                    var topicSircle = "・";
+                    var topicSircle = "◎";
                     if(json["OPEN_FLG"] == 1){
-                        topicSircle = "◎";
+                        topicSircle = "・";
                     }
-                    result += 
-                        '<li><span class="topicSircle"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span>' + json["TOPIC_TEXT"] + 'k→' + k + '</li>';
+                    // インデント調整
+                    var jsonPathList = json["PATH"].split("~");
+                    resultTree += 
+                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="topicSircle"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span><span class="topicText">' + json["TOPIC_TEXT"]+'</span></li>';
                 }
-                if(result != ""){
-                    result += "</ul>";
+                if(resultTree != ""){
+                    resultTree += "</ul>";
                 }
                 // リスト表示
-                document.getElementById("show_result").innerHTML = result;
+                document.getElementById("show_result").innerHTML = resultTree;
+                // --------------ツリー本体ここまで--------------
+                
+                // --------------パンくずリストここから--------------
+                // 保存されているデータの数だけループしリスト作成
+                var resultTopic;
+                for (var key in g_topicPathList){
+                    var json =JSON.parse(g_topicPathList[key]);                     
+                    resultTopic += '<span class="topicSircle">'+json["TOPIC_TEXT"]+"　</span>";
+                }
+                // リスト表示
+                document.getElementById("topicPathList").innerHTML = resultTopic;
+                // --------------パンくずリストここまで--------------
+                
             }
             
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■タップした丸点のトピックをカレントトピックにする■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $('.topicSircle').click(function(){
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■タップした丸点orパンくずリストのトピックをカレントトピックにする■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $(document).on('click','.topicSircle',function(){
+                // トピックIDをキーに、該当のトピックのカレントトピックフラグを1に更新
                 var topicId = $('input[name="topicId"]').val;
+                navigator.notification.alert("topicId→"+topicId);
+                var json = JSON.parse(g_LocalStorage.getItem(topicId));
+                json["CURRENT_TOPIC_FLG"]="1";
+                g_LocalStorage.setItem(topicId,JSON.stringify(json));
+                
                 createTempList();
             });
             
+       
             // 【未実装】階層を変更する
             
             // 【未実装】子階層の開閉
             
             // 【未実装】全子階層の開閉
             
-            // (ネットのソースをほぼそのまま使用。最初動いてたのだが今動かないのでちょっと保留)トピックがタップされたら編集モードに
-            $('li').click(function(){
+            // トピックがタップされたら編集モードに
+            $(document).on('click','.topicText',function(){
                 if(!$(this).hasClass('on')){
                     $(this).addClass('on');
                     var txt = $(this).text();
                     $(this).html('<input type="text" value="' + txt + '" />');
-                    $('li > input').focus().blur(function(){
+                    $('.topicText > input').focus().blur(function(){
                         var inputVal = $(this).val();
                         $(this).parent().removeClass('on').text(inputVal);
                     });
@@ -249,7 +310,7 @@
             <!--パンくずリスト-->
             <span id="topicPathList"></span><br>
             <!--カレントトピック-->
-            <span id="currentTopic" style="font-size:large"></span><br>
+            <span id="currentTopic" style="font-size:large"></span><br>  
             <!--リスト本体-->
             <span id="show_result"></span><br>
         </div>
