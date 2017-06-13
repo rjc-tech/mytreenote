@@ -237,6 +237,7 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click','.moveTopic',function(){
                 // トピックIDをキーに、該当のトピックのカレントトピックフラグを1に更新
+                // 指定がうまくできない…
                 var topicId = $(document).on(this).children('aaaa').val;
                 navigator.notification.alert("topicId→"+topicId);
                 var json = JSON.parse(g_LocalStorage.getItem(topicId));
@@ -294,6 +295,7 @@
             }
         });
         
+        
         // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
         // ■ このアプリについて             ■
         // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -307,6 +309,7 @@
             $("#oss1").css("display", "");
             $("#oss2").css("display", "none");   
         }
+        
         </script>
         </head>
       <body>
