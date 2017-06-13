@@ -290,6 +290,22 @@
                 }
             }
         });
+        
+        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+        // ■ このアプリについて             ■
+        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+        function openOss(){
+            $("#main").css("display", "none");
+            $("#oss1").css("display", "none");
+            $("#oss2").css("display", "");
+        }
+        function appliTop(){
+            // アプリトップに移動する予定
+            // テスト用に初期状態に戻るようにしてある
+            $("#main").css("display", "");
+            $("#oss1").css("display", "");
+            $("#oss2").css("display", "none");   
+        }
         </script>
         </head>
       <body>
@@ -314,7 +330,23 @@
             <!--リスト本体-->
             <span id="show_result"></span><br>
         </div>
-        <div class="panel" id="page2" data-title="Page 2">This is Page 2 </div>
+        <div class="panel" id="page2" data-title="Page 2">
+            <div id="oss1">
+                <input type="button" value="OSSライセンス" onclick="openOss()" style="display:;width:300px;height:30px;">
+                <br>
+                <br>
+                </div>
+                <div id="oss2" style="display:none">
+                cordova
+                <br>
+                html5
+                <br>
+            </div>
+            <!-- テスト用に初期状態に戻るようにしてある -->
+            <!-- <a href="URL" target="_blank"> -->
+            <input type="button" value="このアプリのトップに戻る" onclick="appliTop()" style="width:300px;height:30px;">
+            <br>
+        </div>
       </div>
       <nav id="left">
         <div class="view active">
@@ -328,7 +360,7 @@
                   <a href="#main" onclick="$.afui.clearHistory()">Main Page</a>
                 </li>
                 <li>
-                  <a href="#page2" onclick="$.afui.clearHistory()">Page Two</a>
+                  <a href="#page2" onclick="$.afui.clearHistory()">このアプリについて</a>
                 </li>
               </ul>
             </div>
