@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--HTML5 doctype-->
+<html>
+
+<head>
+
+    <title>App Framework Kitchen Sink</title>
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, minimal-ui">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+    <link rel="stylesheet" type="text/css" href="lib/appframework/icons.css" />
+    <link rel="stylesheet" type="text/css" href="lib/appframework/af.ui.css" />
+
+    <script type="text/javascript" charset="utf-8" src="lib/jquery.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
+        
+    <script src='cordova.js'></script>
+
+    <script type="text/javascript">
+        function openOss(){
+            $("#main").css("display", "none");
+            $("#oss1").css("display", "none");
+            $("#oss2").css("display", "");
+        }
+        function appliTop(){
+            // アプリトップに移動する予定
+            // テスト用に初期状態に戻る
+            $("#main").css("display", "");
+            $("#oss1").css("display", "");
+            $("#oss2").css("display", "none");
+        }
+    </script>
+
+</head>
+
+<body>
+    <div id="splashscreen" class='ui-loader heavy'>
+        App Framework
+        <br>
+        <br>
+        <span class='ui-icon ui-icon-loading spin'></span>
+        <h1>Starting app</h1>
+    </div>
+
+    <div class="view splitview">
+        
+        <header>
+            <a class="menuButton" data-left-menu="left" data-transition="cover" style="float:left"></a>
+            <h1>このアプリについて</h1>
+        </header>
+        
+        <div class="pages">
+            <div class="panel" data-title="" data-selected="true">
+                <div id="oss1">
+                    <input type="button" value="OSSライセンス" onclick="openOss();" style="display:">
+                    <br>
+                    <br>
+                </div>
+                <div id="oss2" style="display:none">
+                     cordova
+                     <br>
+                     html5
+                    <br>
+                </div>
+                <input type="button" value="このアプリのトップに戻る" onclick="appliTop();">
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
