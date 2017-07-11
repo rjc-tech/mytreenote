@@ -8,9 +8,9 @@
     
     
     // topicIdの初期化
-    if(localStorage.getItem("TOPIC_ID") == null) {
+    if(localStorage.getItem("TOPIC_ID_SEQ") == null) {
         // ローカルストレージにtopicIdのシーケンス初期設定
-        localStorage.setItem("TOPIC_ID", 0);
+        localStorage.setItem("TOPIC_ID_SEQ", 0);
     }
 
     // 親topic作成
@@ -32,7 +32,14 @@
     createTopic(5);
     createTopic(1);
     createTopic(1);
-    deleteTopic(2);
+    //deleteTopic(2);
+    
+    
+   hierarchyUpMove(2);
+   hierarchyUpMove(3);
+//        hierarchyUpMove(8);
+//        hierarchyUpMove(8);
+//        hierarchyUpMove(8);
 })();
 
 // ----------------------------------------------------------------
@@ -44,7 +51,7 @@
 // ----------------------------------------------------------------
 function createParentTopic() {
     // 現在のtopicIdのシーケンスを取得し、最大値+1する
-    var id = parseInt(localStorage.getItem("TOPIC_ID"));
+    var id = parseInt(localStorage.getItem("TOPIC_ID_SEQ"));
     id += 1;
     
     // topicの作成
@@ -64,7 +71,7 @@ function createParentTopic() {
     localStorage.setItem(obj["TOPIC_ID"], jsonStr);
     
     // ストレージに保存されている親topicIdのシーケンス更新
-    localStorage.setItem("TOPIC_ID", id);
+    localStorage.setItem("TOPIC_ID_SEQ", id);
 }
 
 // ----------------------------------------------------------------
@@ -76,7 +83,7 @@ function createParentTopic() {
 // ----------------------------------------------------------------
 function createTopic(topicId) {
     // 現在のtopicIdのシーケンスを取得し、最大値+1する
-    var id = parseInt(localStorage.getItem("TOPIC_ID"));
+    var id = parseInt(localStorage.getItem("TOPIC_ID_SEQ"));
     id += 1;
 
     var json = localStorage.getItem(topicId);
@@ -101,7 +108,7 @@ function createTopic(topicId) {
     localStorage.setItem(obj["TOPIC_ID"], jsonStr);
     
     // ストレージに保存されている親topicIdのシーケンス更新
-    localStorage.setItem("TOPIC_ID", id);
+    localStorage.setItem("TOPIC_ID_SEQ", id);
 }
 
 
@@ -235,42 +242,135 @@ function updateTopicText(topicId, str) {
 // ----------------------------------------------------------------
 // 関数名：hierarchyUpMove
 // 機能　：カレントボタン（上）押下処理
-// 引数　：json 更新対象のtopicJSONオブジェクト
+// 引数　：topicId 更新対象のtopicId
 // 戻り値：無し
-// 備考：
+// 備考：TODO：表示順の考慮が必要だが、未実装
 // ----------------------------------------------------------------
-function hierarchyUpMove(json) {
+function hierarchyUpMove(topicId) {
     
+    var json = localStorage.getItem(topicId);
     var jsonParse = JSON.parse(json);
-    var pathList = jsonParse["PATH"].split("~");
+    var path = jsonParse["PATH"];
+    var pathList = path.split("~");
     // 自分より一つ上の親のid(path)を取得
     var id = pathList[pathList.length - 2]
 
+    // 起点の状態で押下された場合は処理終了
+    if(typeof id === "undefined") {
+        return;
+    }
+    
     if("/" == id) {
-        // 一番上（起点）になった場合は空設定
+        // 一番上（起点）になった場合は初期設定
         jsonParse["PARENT_TOPIC_ID"] = "";
+        jsonParse["PATH"] = "/";
     } else {
         // 親topicIdをひとつ上の親のidで更新
-        jsonParse["PARENT_TOPIC_ID"] = id;        
+        jsonParse["PARENT_TOPIC_ID"] = parseInt(id);
+        jsonParse["PATH"] = path.substr(0, path.length -2);
     }
-    
-    var path = "";
-    // path再作成
-    for(var i = 0; i < pathList.length -2; i++) {
-        path += pathList[i];
-    }
-    jsonParse["PATH"] = path;
-    
+
     // JSON文字列に変換
     var jsonParseStr = JSON.stringify(jsonParse);
     // ローカルストレージに保存
     localStorage.setItem(jsonParse["TOPIC_ID"], jsonParseStr);
+
+    // 対象topicにぶら下がる子topicのパスも合わせて更新
+    for(var key in localStorage) {
+        var localJson = localStorage.getItem(key);
+        var localJsonParse = JSON.parse(localJson);
+    
+        if(localJsonParse == null || !(localJsonParse instanceof Object)) {
+            continue;
+        }
+    
+        var pathJsonParse = localJsonParse["PATH"];
+        var pathList = pathJsonParse.split("~");
+
+        for(var i = 0; i < pathList.length; i++) {
+            var localpath = pathList[i];
+            
+            if(topicId == localpath) {
+                var index = pathJsonParse.indexOf(localpath);
+                localJsonParse["PATH"] = 
+                    pathJsonParse.substr(0,index-2) + pathJsonParse.substr(index);
+                
+                // JSON文字列に変換
+                var localJsonParseStr = JSON.stringify(localJsonParse);
+                // ローカルストレージに保存
+                localStorage.setItem(localJsonParse["TOPIC_ID"], localJsonParseStr);
+
+                break;
+            }
+        }    
+
+    }
 }
 
+// ----------------------------------------------------------------
+// 関数名：hierarchyUnderMove
+// 機能　：カレントボタン（下）押下処理
+// 引数　：topicId 更新対象のtopicId
+// 戻り値：無し
+// 備考：TODO：表示順の考慮が必要だが、未実装
+// ----------------------------------------------------------------
+function hierarchyUnderMove(topicId) {
 
-// カレントボタン(下)押下処理
-function hierarchyUnderMove() {
+    var json = localStorage.getItem(topicId);
+    var jsonParse = JSON.parse(json);
+    var path = jsonParse["PATH"];
+    var pathList = path.split("~");
+    // 自分より一つ下の子のid(path)を取得
+    var id = pathList[pathList.length + 2]
 
+    // 起点の状態で押下された場合は処理終了
+    if(typeof id === "undefined") {
+        return;
+    }
+    
+    if("/" == id) {
+        // 一番上（起点）になった場合は初期設定
+        jsonParse["PARENT_TOPIC_ID"] = "";
+        jsonParse["PATH"] = "/";
+    } else {
+        // 親topicIdをひとつ上の親のidで更新
+        jsonParse["PARENT_TOPIC_ID"] = parseInt(id);
+        jsonParse["PATH"] = path.substr(0, path.length -2);
+    }
+
+    // JSON文字列に変換
+    var jsonParseStr = JSON.stringify(jsonParse);
+    // ローカルストレージに保存
+    localStorage.setItem(jsonParse["TOPIC_ID"], jsonParseStr);
+
+    // 対象topicにぶら下がる子topicのパスも合わせて更新
+    for(var key in localStorage) {
+        var localJson = localStorage.getItem(key);
+        var localJsonParse = JSON.parse(localJson);
+    
+        if(localJsonParse == null || !(localJsonParse instanceof Object)) {
+            continue;
+        }
+    
+        var pathJsonParse = localJsonParse["PATH"];
+        var pathList = pathJsonParse.split("~");
+
+        for(var i = 0; i < pathList.length; i++) {
+            var localpath = pathList[i];
+            
+            if(topicId == localpath) {
+                var index = pathJsonParse.indexOf(localpath);
+                localJsonParse["PATH"] = 
+                    pathJsonParse.substr(0,index-2) + pathJsonParse.substr(index);
+                
+                // JSON文字列に変換
+                var localJsonParseStr = JSON.stringify(localJsonParse);
+                // ローカルストレージに保存
+                localStorage.setItem(localJsonParse["TOPIC_ID"], localJsonParseStr);
+
+                break;
+            }
+        }    
+
+    }
 }
-
-
