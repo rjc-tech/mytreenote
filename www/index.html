@@ -31,11 +31,6 @@
 
             // リスト作成
             window.onload = function () {
-                // データ0の場合は親トピック作成
-                g_LocalStorage.clear();
-                if (g_LocalStorage.length == 0) {
-                    createParentTopic();
-                }
                 // ツリーの作成
                 createTree();
             }
@@ -45,14 +40,11 @@
             // ■  ツリーを作成する ■
             // ■■■■■■■■■■■■■■■■■■
             function createTree() {
-
                 g_tempListStorage.clear();
 
                 // カレントトピック存在フラグ
                 var currentFlg = false;
-
                 for (var i = 0; i < g_LocalStorage.length; i++) {
-
                     var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
                     // カレントトピックを見つけたらリストの作成
                     if (json["CURRENT_TOPIC_FLG"] == 1) {
@@ -238,12 +230,16 @@
             // ■トピックがタップされたら編集モードに■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.topicText', function () {
+
                 if (!$(this).hasClass('on')) {
+
                     // g_holdTopicは、タップしたトピックを操作するためにトピックIDを保持するためのもの
                     g_holdTopic = $(this).data("id");
+
                     $(this).addClass('on');
                     var txt = $(this).text();
                     $(this).html('<input type="text" value="' + txt + '" />');
+
                     // トピックからフォーカスアウトしたら、編集モードやめて入力内容を自動保存
                     $('.topicText > input').focus().blur(function () {
                         var inputVal = $(this).val();
@@ -267,9 +263,33 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■          トピック追加          ■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $(document).on('click', '.addTopic', function () {
-                // カレントトピックの配下に新規編集欄を表示
-                // フォーカスアウトしたら入力内容を自動保存。なにも入力されなければそのまま編集欄削除
+            $(document).on('click', '#addTopic', function () {
+
+                // 新規編集欄を表示
+                $('#new_edit').get(0).type = 'text';
+
+                // トピックからフォーカスアウトしたら、編集モードやめて入力内容を自動保存
+                $('#new_edit > input').focus().blur(function () {
+
+                    if ($(this).val() != "") {
+                        var currentFlg = false;
+                        for (var i = 0; i < g_LocalStorage.length; i++) {
+                            var topic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+                            // カレントトピックを親トピックとしてトピック新規作成
+                            if (topic["CURRENT_TOPIC_FLG"] == 1) {
+                                createTopic(topic["PARENT_TOPIC_ID"], $(this).val())
+                                currentFlg = true;
+                                break;
+                            }
+                        }
+                        // カレントトピックがない場合は親トピックを作成
+                        if (!currentFlg) {
+                            createParentTopic($(this).val());
+                        }
+                        createTree();
+                    }
+                });
+                $('#new_edit').get(0).type = 'label';
             });
 
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -357,6 +377,9 @@
                 <br>
                 <!--リスト本体-->
                 <span id="show_result"></span>
+                <br>
+                <!--新規編集欄(仮。本当はカレントトピックの末尾とかにしたいのだけどどう作っていいか分からん…)-->
+                <span id="new_edit"></span>
                 <br>
                 <!--トピック追加ボタン-->
                 <span id="addTopic">+</span>
