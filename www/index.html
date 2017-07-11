@@ -14,6 +14,7 @@
     <script type="text/javascript" charset="utf-8" src="lib/jquery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/mytreenote.js"></script>
     <script src='cordova.js'></script>
 
     <script>
@@ -30,101 +31,11 @@
 
             // リスト作成
             window.onload = function () {
-
-                //-------------------------------------------
-                // ここからテスト↓↓適当なデータを保存する
-                // 階層追加
-                var k = "1";
-                var obj = {
-                    TOPIC_ID: 1,
-                    PARENT_TOPIC_ID: "",
-                    PATH: "/",
-                    ORDER: 1,
-                    TOPIC_TEXT: "ルートトピック1",
-                    OPEN_FLG: 0,
-                    CURRENT_TOPIC_FLG: 1
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-
-                var k = "10";
-                var obj = {
-                    TOPIC_ID: 10,
-                    PARENT_TOPIC_ID: 1,
-                    PATH: "/~1",
-                    ORDER: 1,
-                    TOPIC_TEXT: "子トピック1-1",
-                    OPEN_FLG: 1,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-
-                var k = "100";
-                var obj = {
-                    TOPIC_ID: 100,
-                    PARENT_TOPIC_ID: 10,
-                    PATH: "/~1~10",
-                    ORDER: 1,
-                    TOPIC_TEXT: "子トピック1-1-1",
-                    OPEN_FLG: 0,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-
-                var k = "101";
-                var obj = {
-                    TOPIC_ID: 101,
-                    PARENT_TOPIC_ID: 10,
-                    PATH: "/~1~10",
-                    ORDER: 2,
-                    TOPIC_TEXT: "子トピック1-1-2",
-                    OPEN_FLG: 0,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-
-                var k = "2";
-                var obj = {
-                    TOPIC_ID: 2,
-                    PARENT_TOPIC_ID: "",
-                    PATH: "/",
-                    ORDER: 1,
-                    TOPIC_TEXT: "ルートトピック2",
-                    OPEN_FLG: 0,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-                var k = "20";
-                var obj = {
-                    TOPIC_ID: 20,
-                    PARENT_TOPIC_ID: 2,
-                    PATH: "/~2",
-                    ORDER: 1,
-                    TOPIC_TEXT: "子トピック2-1",
-                    OPEN_FLG: 1,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-                var k = "21";
-                var obj = {
-                    TOPIC_ID: 21,
-                    PARENT_TOPIC_ID: 2,
-                    PATH: "/~2",
-                    ORDER: 2,
-                    TOPIC_TEXT: "子トピック2-2",
-                    OPEN_FLG: 1,
-                    CURRENT_TOPIC_FLG: 0
-                };
-                var v = JSON.stringify(obj);
-                g_LocalStorage.setItem(k, v);
-                // ここまでテスト↑↑適当なデータを保存する
-                //-------------------------------------------
-
+                // データ0の場合は親トピック作成
+                g_LocalStorage.clear();
+                if (g_LocalStorage.length == 0) {
+                    createParentTopic();
+                }
                 // ツリーの作成
                 createTree();
             }
@@ -366,9 +277,15 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // 長押しを検知してトピックを削除
             $(document).on('touchstart', '.moveTopic', function () {
-                timerid = setTimeout(function () {
-                    // ★デバッグ用 
-                    navigator.notification.alert("トピック削除functionを呼ぶ");
+                timerid = setTimeout(function () {　　
+                    // ポップアップで削除可否を確認
+                    if (!confirm('削除します。よろしいですか？')) {
+                        // キャンセル
+                        return false;
+                    } else {
+                        //　OK
+                        deleteTopic($(this).data("id"));
+                    }
                 }, 750);
             });
 
