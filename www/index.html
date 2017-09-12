@@ -272,7 +272,6 @@
                 }
             });
             
-            
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■ JSONのソート(たぶんまだ動かない)■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -297,33 +296,78 @@
                 }
             }
        
-       
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■ 開閉ボタン機能(行にALL＋付与)   ■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             function allPlus(){
+                
                 // ！！！作成中のため動かないです！！！
-                
-                // resultTreeの各行ごとに子トピックスがあるものALL+を付与
-                var classVal = $('.moveTopic').attr('class'); // classの値を取得
-                var classVals = classVal.split(' '); // 取得した値を分割
-                
-                // 子トピックがある場合
-                if(1){
+
+                // 子トピックがあるか確認
+                chkFlagChild = true;
+
+                if(chkFlagChild){
+                    // 子トピックがある場合
+                    
                     // 行の最後にALL+を追加
-                    $('.moveTopic').append("<b>ALL+</b>");
+                    $('li').append("<b>ALL+</b>");
                     // 子トピックスが開いてる状態の場合
                     if(1){
                         // 子トピックにdisplayON/OFFのスタイルを追加
-                        //　
-                        $('.moveTopic').css("display", "");
+                        $('li').css("display", "");
                     }
-                    // テスト用コンソールログ出力
-                    console.log(classVals[i]);
                 }else{
                     // 子トピックがない
                 }
+                
+                // 子トピック展開
+                childExpansion();
             }
+       
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■　子トピック展開               ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            function childExpansion(){
+                
+                // ！！！作成中のため動かないです！！！
+                
+                var resultTree = "";
+                if(g_tempListStorage.length > 0){
+                    resultTree = "<ul>";
+                }
+                // 保存されているデータの数だけループしリスト作成
+                for(var i = clickCountNow; i < g_tempListStorage.length; i++){
+                    var k = g_tempListStorage.key(i);
+                    var json =JSON.parse(g_tempListStorage.getItem(k));                     
+                    
+                    // トピックが展開中か折り畳み中かによって黒丸の表示を変える
+                    var topicSircle = "◎";
+                    if(json["OPEN_FLG"] == 1){
+                        topicSircle = "・";
+                    }
+                    // インデント調整
+                    var jsonPathList = json["PATH"].split("~");
+                    resultTree += 
+                        '<li style="padding-left:'+ (jsonPathList.length-1)*10 +'px"><span class="moveTopic"><input type="hidden" name="topicId" value="' + json["TOPIC_ID"] + '" />' + topicSircle + '</span><span class="topicText">' + json["TOPIC_TEXT"]+'</span></li>';
+                    
+                }
+                if(resultTree != ""){
+                    resultTree += "</ul>";
+                }
+                // リスト表示
+                document.getElementById("show_result").innerHTML = resultTree;
+            }
+       
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■ クリック行数取得              ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // クリック行数カウント
+            clickCountNow = 0;
+            // 行数取得
+            $('li').click( function(){
+                clickCountNow = $('li').index(this);
+                alert(clickCountNow);
+            });
 
         });
         
