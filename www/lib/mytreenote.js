@@ -1,21 +1,11 @@
 /*
  Mytreenote用ファンクション
 */
-
-// 初期処理
-(function() {
-    // topicIdの初期化
-    if(localStorage.getItem("TOPIC_ID_SEQ") == null) {
-            // ローカルストレージにtopicIdのシーケンス初期設定
-        localStorage.setItem("TOPIC_ID_SEQ", 0);
-    }
-})();
-
 // ----------------------------------------------------------------
 // 関数名：createParentTopic
 // 機能　：起点となる（親）topic作成処理
 // 引数　：無し
-// 戻り値：無し
+// 戻り値：登録したトピックID
 // 備考：作成topicはローカルストレージに保存（キー：TOPIC_ID）
 // ----------------------------------------------------------------
 function createParentTopic() {
@@ -41,6 +31,8 @@ function createParentTopic() {
     
     // ストレージに保存されている親topicIdのシーケンス更新
     localStorage.setItem("TOPIC_ID_SEQ", id);
+    
+    return obj["TOPIC_ID"];
 }
 
 // ----------------------------------------------------------------
