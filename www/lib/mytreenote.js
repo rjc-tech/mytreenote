@@ -1,19 +1,16 @@
 /*
  Mytreenote用ファンクション
 */
-
-
-
 // ----------------------------------------------------------------
 // 関数名：createParentTopic
 // 機能　：起点となる（親）topic作成処理
 // 引数　：無し
-// 戻り値：無し
+// 戻り値：登録したトピックID
 // 備考：作成topicはローカルストレージに保存（キー：TOPIC_ID）
 // ----------------------------------------------------------------
-function createParentTopic(topicText) {
+function createParentTopic() {
     // 現在のtopicIdのシーケンスを取得し、最大値+1する
-    var id = parseInt(localStorage.getItem("TOPIC_ID"));
+    var id = parseInt(localStorage.getItem("TOPIC_ID_SEQ"));
     id += 1;
     
     // topicの作成
@@ -22,7 +19,7 @@ function createParentTopic(topicText) {
         PARENT_TOPIC_ID:"",
         PATH:"/",
         ORDER:id,
-        TOPIC_TEXT:"aaaa",
+        TOPIC_TEXT:"",
         OPEN_FLG:1,
         CURRENT_TOPIC_FLG:0
     };
@@ -33,7 +30,9 @@ function createParentTopic(topicText) {
     localStorage.setItem(obj["TOPIC_ID"], jsonStr);
     
     // ストレージに保存されている親topicIdのシーケンス更新
-    localStorage.setItem("TOPIC_ID", id);
+    localStorage.setItem("TOPIC_ID_SEQ", id);
+    
+    return obj["TOPIC_ID"];
 }
 
 // ----------------------------------------------------------------
@@ -43,9 +42,9 @@ function createParentTopic(topicText) {
 // 戻り値：無し
 // 備考：作成topicはローカルストレージに保存（キー：TOPIC_ID）
 // ----------------------------------------------------------------
-function createTopic(parentTopicId,topicText) {
+function createTopic(topicId) {
     // 現在のtopicIdのシーケンスを取得し、最大値+1する
-    var id = parseInt(localStorage.getItem("TOPIC_ID"));
+    var id = parseInt(localStorage.getItem("TOPIC_ID_SEQ"));
     id += 1;
 
     var json = localStorage.getItem(topicId);
@@ -70,7 +69,7 @@ function createTopic(parentTopicId,topicText) {
     localStorage.setItem(obj["TOPIC_ID"], jsonStr);
     
     // ストレージに保存されている親topicIdのシーケンス更新
-    localStorage.setItem("TOPIC_ID", id);
+    localStorage.setItem("TOPIC_ID_SEQ", id);
 }
 
 
@@ -79,7 +78,7 @@ function createTopic(parentTopicId,topicText) {
 // 機能　：オープンフラグ更新処理
 // 引数　：topicId 更新対象のtopicId
 // 戻り値：無し
-// 備考：引数topicはローカルストレージに更新（キー：TOPIC_ID）
+// 備考：
 // ----------------------------------------------------------------
 function updateOpenFlg(topicId) {
 
@@ -106,7 +105,7 @@ function updateOpenFlg(topicId) {
 // 機能　：topic削除処理
 // 引数　：topicId 削除対象のtopicId
 // 戻り値：無し
-// 備考：削除対象topicにぶら下がる子topicも削除する
+// 備考：削除対象topicにぶら下がる子topicも削除
 // ----------------------------------------------------------------
 function deleteTopic(topicId) {
 
@@ -204,42 +203,171 @@ function updateTopicText(topicId, str) {
 // ----------------------------------------------------------------
 // 関数名：hierarchyUpMove
 // 機能　：カレントボタン（上）押下処理
-// 引数　：json 更新対象のtopicJSONオブジェクト
+// 引数　：topicId 更新対象のtopicId
 // 戻り値：無し
 // 備考：
 // ----------------------------------------------------------------
-function hierarchyUpMove(json) {
+function hierarchyUpMove(topicId) {
     
+    var json = localStorage.getItem(topicId);
     var jsonParse = JSON.parse(json);
-    var pathList = jsonParse["PATH"].split("~");
+    var path = jsonParse["PATH"];
+    var pathList = path.split("~");
     // 自分より一つ上の親のid(path)を取得
     var id = pathList[pathList.length - 2]
 
-    if("/" == id) {
-        // 一番上（起点）になった場合は空設定
-        jsonParse["PARENT_TOPIC_ID"] = "";
-    } else {
-        // 親topicIdをひとつ上の親のidで更新
-        jsonParse["PARENT_TOPIC_ID"] = id;        
+    // 起点の状態で押下された場合は処理終了
+    if(typeof id === "undefined") {
+        return;
     }
     
-    var path = "";
-    // path再作成
-    for(var i = 0; i < pathList.length -2; i++) {
-        path += pathList[i];
+    if("/" == id) {
+        // 一番上（起点）になった場合は初期設定
+        jsonParse["PARENT_TOPIC_ID"] = "";
+        jsonParse["PATH"] = "/";
+    } else {
+        // 親topicIdをひとつ上の親のidで更新
+        jsonParse["PARENT_TOPIC_ID"] = parseInt(id);
+        jsonParse["PATH"] = path.substr(0, path.length -2);
     }
-    jsonParse["PATH"] = path;
+
+    // JSON文字列に変換
+    var jsonParseStr = JSON.stringify(jsonParse);
+    // ローカルストレージに保存
+    localStorage.setItem(jsonParse["TOPIC_ID"], jsonParseStr);
+
+    // 対象topicにぶら下がる子topicのパスも合わせて更新
+    for(var key in localStorage) {
+        var localJson = localStorage.getItem(key);
+        var localJsonParse = JSON.parse(localJson);
+    
+        if(localJsonParse == null || !(localJsonParse instanceof Object)) {
+            continue;
+        }
+    
+        var pathJsonParse = localJsonParse["PATH"];
+        var pathList = pathJsonParse.split("~");
+
+        for(var i = 0; i < pathList.length; i++) {
+            var localpath = pathList[i];
+            
+            if(topicId == localpath) {
+                var index = pathJsonParse.indexOf(localpath);
+                localJsonParse["PATH"] = 
+                    pathJsonParse.substr(0,index-2) + pathJsonParse.substr(index);
+                
+                // JSON文字列に変換
+                var localJsonParseStr = JSON.stringify(localJsonParse);
+                // ローカルストレージに保存
+                localStorage.setItem(localJsonParse["TOPIC_ID"], localJsonParseStr);
+
+                break;
+            }
+        }    
+
+    }
+}
+
+// ----------------------------------------------------------------
+// 関数名：hierarchyUnderMove
+// 機能　：カレントボタン（下）押下処理
+// 引数　：topicId 更新対象のtopicId
+// 戻り値：無し
+// 備考：
+// ----------------------------------------------------------------
+function hierarchyUnderMove(topicId) {
+    
+    // 更新対象topic取得
+    var json = localStorage.getItem(topicId);
+    var jsonParse = JSON.parse(json);
+    var path = jsonParse["PATH"];
+    var pathList = path.split("~");
+    var targetlen = pathList.length;
+    var targetOrder = jsonParse["ORDER"];
+    var topicList = [];
+    
+    // 更新対象topicと同列階層のtopicを抽出
+    for(var key in localStorage) {
+        var localJson = localStorage.getItem(key);
+        var localJsonParse = JSON.parse(localJson);
+    
+        if(localJsonParse == null || !(localJsonParse instanceof Object)) {
+            continue;
+        }
+    
+        var pathJsonParse = localJsonParse["PATH"];
+        var pathList = pathJsonParse.split("~");
+        var len = pathList.length;        
+        // 更新対象topicと同列階層ではない場合、処理終了
+        if(targetlen != len) {
+            continue;
+        }
+
+        var order = localJsonParse["ORDER"];
+        // 表示順が更新対象topic以上の場合、処理終了
+        if(parseInt(targetOrder) <= parseInt(order)) {
+            continue;
+        }
+
+        topicList.push(localJsonParse);
+    }
+    
+    // 対象topicが存在しない場合、処理終了
+    if(parseInt(topicList.length) <= 0){
+        return;
+    }
+    
+    // 比較用表示順
+    var comparisonOrder = "";
+    
+    for(var i = 0; i < topicList.length; i++) {
+        var topic = topicList[i];
+
+        // 表示順が一番大きいものがぶら下がり先の対象
+        if(comparisonOrder != "" &&
+           parseInt(comparisonOrder) >= parseInt(topic["ORDER"])) {
+           continue;
+        } else {
+            comparisonOrder = topic["ORDER"];
+        }
+
+        // ぶらさがり設定
+        jsonParse["PARENT_TOPIC_ID"] = topic["TOPIC_ID"];
+        jsonParse["PATH"] = path + "~" + topic["TOPIC_ID"];
+    }
     
     // JSON文字列に変換
     var jsonParseStr = JSON.stringify(jsonParse);
     // ローカルストレージに保存
     localStorage.setItem(jsonParse["TOPIC_ID"], jsonParseStr);
+
+    var newPath = jsonParse["PATH"];
+    
+    // 対象topicにぶら下がる子topicのパスも合わせて更新
+    for(var key in localStorage) {
+        var localJson = localStorage.getItem(key);
+        var localJsonParse = JSON.parse(localJson);
+    
+        if(localJsonParse == null || !(localJsonParse instanceof Object)) {
+            continue;
+        }
+    
+        var pathJsonParse = localJsonParse["PATH"];
+        var pathList = pathJsonParse.split("~");
+
+        for(var i = 0; i < pathList.length; i++) {
+            var localpath = pathList[i];
+            
+            if(topicId == localpath) {
+                localJsonParse["PATH"] = 
+                    newPath + "~" + localJsonParse["PARENT_TOPIC_ID"];
+                // JSON文字列に変換
+                var localJsonParseStr = JSON.stringify(localJsonParse);
+                // ローカルストレージに保存
+                localStorage.setItem(localJsonParse["TOPIC_ID"], localJsonParseStr);
+
+                break;
+            }
+        }
+    }
 }
-
-
-// カレントボタン(下)押下処理
-function hierarchyUnderMove() {
-
-}
-
-

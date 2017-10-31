@@ -29,8 +29,8 @@
             // トピックID一時保存用
             var g_holdTopic;
             // シーケンスなければ作成
-            if (g_LocalStorage.getItem("TOPIC_ID")) {
-                g_LocalStorage.setItem("TOPIC_ID", 0)
+            if (!g_LocalStorage.getItem("TOPIC_ID_SEQ")) {
+                g_LocalStorage.setItem("TOPIC_ID_SEQ", 0)
             }
             // リスト作成
             window.onload = function () {
@@ -38,11 +38,13 @@
                 createTree();
             }
 
-
             // ■■■■■■■■■■■■■■■■■■
             // ■  ツリーを作成する ■
             // ■■■■■■■■■■■■■■■■■■
             function createTree() {
+
+                // ★デバッグ用 
+                //                navigator.notification.alert("createTreeにはいった");
 
                 g_tempListStorage.clear();
 
@@ -130,7 +132,7 @@
 
                 // --------------パンくずリストここから--------------
                 // 保存されているデータの数だけループしリスト作成。最初に「home」を追加し、カレントなしの状態に戻れるようにする
-                var resultTopic = "";
+                var resultTopic = '<span class="moveTopic" data-id="home">home</span>';
                 for (var key in g_topicPathList) {
                     var json = JSON.parse(g_topicPathList[key]);
                     resultTopic += '<span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + "　</span>";
@@ -146,6 +148,7 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.moveTopic', function () {
 
+
                 // 現在カレントトピックフラグが1になっているデータを0に更新する
                 for (var i = 0; i < g_LocalStorage.length; i++) {
                     var otherJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
@@ -156,71 +159,19 @@
                         break;
                     }
                 }
+                // idが"home"でない場合は、カレントトピックフラグを更新
+                if ($(this).data("id") != "home") {
 
-                // トピックIDをキーに、タップされた該当のトピックのカレントトピックフラグを1に更新
-                var topicId = $(this).data("id");
-                var json = JSON.parse(g_LocalStorage.getItem(topicId));
+                    // トピックIDをキーに、タップされた該当のトピックのカレントトピックフラグを1に更新
+                    var topicId = $(this).data("id");
+                    var json = JSON.parse(g_LocalStorage.getItem(topicId));
 
-                json.CURRENT_TOPIC_FLG = "1";
-                g_LocalStorage.setItem(topicId, JSON.stringify(json));
-
-                createTree();
-            });
-
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■編集中のトピックの階層を一つ上げる ■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $(document).on('click', '#classUp', function () {
-                for (var i = 0; i < g_LocalStorage.length; i++) {
-                    var selectTopic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-
-                    // ルートトピックはこれ以上階層上げられないのでなにもしない
-                    var oldPath = selectTopic.PATH;
-                    if (oldPath != "/") {
-
-                        if (selectTopic.TOPIC_ID == g_holdTopic) {
-                            // パスの最後の要素を削除
-                            var newPath = oldPath.substr(0, oldPath.lastIndexOf("~"));
-                            selectTopic.PATH = newPath;
-                            // 親トピックの変更
-                            selectTopic.PARENT_TOPIC_ID = newPath.substr(oldPath.lastIndexOf("~") - 1, oldPath.length);
-                            g_LocalStorage.setItem(selectTopic.TOPIC_ID, JSON.stringify(selectTopic));
-                            break;
-                        }
-                    }
+                    json.CURRENT_TOPIC_FLG = "1";
+                    g_LocalStorage.setItem(topicId, JSON.stringify(json));
                 }
-                createTree();
-            });
-
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■編集中のトピックの階層を一つ下げる ■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // 編集中のトピックと並列したトピックがある場合に限り、自身を並列トピックの配下に移動させる
-            $(document).on('click', '#classDown', function () {
-                for (var i = 0; i < g_LocalStorage.length; i++) {
-                    var selectTopic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-
-                    if (selectTopic.TOPIC_ID == g_holdTopic) {
-
-                        var oldPath = selectTopic.PATH;
-                        var oldParentTopicId = selectTopic.PARENT_TOPIC_ID;
-                        // 自身と並列した(親が同じ)トピックを探す
-                        for (var a = 0; a < g_LocalStorage.length; a++) {
-                            var parallelTopic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
-
-                            if (parallelTopic.PARENT_TOPIC_ID = oldParentTopicId) {
-                                // パスを「並列トピックのパス+並列トピックのトピックID」に変更
-                                selectTopic.PATH = parallelTopic.PATH + "~" + parallelTopic.TOPIC_ID;
-                                // 親トピックの変更
-                                selectTopic.PARENT_TOPIC_ID = parallelTopic.TOPIC_ID;
-                                g_LocalStorage.setItem(selectTopic.TOPIC_ID, JSON.stringify(selectTopic));
-                                break;
-                            }
-                        }
-                    }
-                }
+                // カレントトピックの作成
+                document.getElementById('currentTopic').innerHTML = '';
+                currentFlg = true;
                 createTree();
             });
 
@@ -230,70 +181,52 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.topicText', function () {
 
-                if (!$(this).hasClass('on')) {
+                var topicId = "";
+                var inputVal = "";
 
-                    // g_holdTopicは、タップしたトピックを操作するためにトピックIDを保持するためのもの
-                    g_holdTopic = $(this).data("id");
-                    // ★デバッグ用 
-                    navigator.notification.alert("g_holdTopic→" + g_holdTopic);
+                // 新規追加の場合
+                if ($(this).data("id") == "new_edit") {
+                    // 空のトピックを作成
+                    topicId = createParentTopic();
 
-                    $(this).addClass('on');
-                    var txt = $(this).text();
-                    $(this).html('<input type="text" value="' + txt + '" />');
+                    // フォーカスアウト
+                    $('#new_edit').change(function () {
 
-                    // トピックからフォーカスアウトしたら、編集モードやめて入力内容を自動保存
+                        // ★デバッグ用 
+                        navigator.notification.alert("new_editのフォーカスアウト");
+
+                        inputVal = $(this).val();
+                        $(this).text("");
+                        // 保存
+                        updateTopicText(topicId, inputVal);
+                        // 再描画
+                        createTree();
+                    })
+
+                } else {
+                    // 既存のトピックの場合
+                    if (!$(this).hasClass('on')) {
+
+                        $(this).addClass('on');
+                        var txt = $(this).text();
+                        $(this).html('<input type="text" value="' + txt + '" />');
+                    }
+                    // フォーカスアウト
                     $('.topicText > input').change(function () {
-                        var inputVal = $(this).val();
+                        // ★デバッグ用 
+                        navigator.notification.alert("既存トピックのフォーカスアウト");
+
+                        inputVal = $(this).val();
                         $(this).parent().removeClass('on').text(inputVal);
-                        //
-                        //                        for (var i = 0; i < g_LocalStorage.length; i++) {
-                        //                            var selectTopic = Json.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-                        //
-                        //                            if (selectTopic.TOPIC_ID == g_holdTopic) {
-                        //                                // テキスト保存
-                        //                                selectTopic.TOPIC_TEXT = inputVal;
-                        //                                g_LocalStorage.setItem(selectTopic.TOPIC_ID, JSON.stringify(selectTopic));
-                        //                                break;
-                        //                            }
-                        //                        }
-                        // mytreenote.jsの更新処理呼び出し
-                        updateTopicText(g_holdTopic, inputVal);
-                    });
+                        // 保存
+                        updateTopicText(topicId, inputVal);
+                        // 再描画
+                        createTree();
+                    })
                 }
             });
 
 
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■          トピック追加          ■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $(document).on('click', '#addTopic', function () {
-                // 新規編集欄を表示しフォーカスを当てる
-                //                                $('#new_edit').append('<input type="text">');
-                $('#new_edit').focus();
-
-                // トピックからフォーカスアウトしたら、編集モードやめて入力内容を自動保存
-                $('#new_edit').change(function () {
-                    // ★デバッグ用 
-                    //                    navigator.notification.alert("フォーカスアウトした。入力文字→" + $('#new_edit').val());
-                    if ($('#new_edit').val() != "") {
-                        var currentFlg = false;
-                        for (var i = 0; i < g_LocalStorage.length; i++) {
-                            var topic = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-                            // カレントトピックを親トピックとしてトピック新規作成
-                            if (topic.CURRENT_TOPIC_FLG == 1) {
-                                createTopic(topic.PARENT_TOPIC_ID, $(this).val())
-                                currentFlg = true;
-                                break;
-                            }
-                        }
-                        // カレントトピックがない場合は親トピックを作成
-                        if (!currentFlg) {
-                            createParentTopic($('#new_edit').val());
-                        }
-                        createTree();
-                    }
-                })
-            });
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■          トピック削除          ■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -315,23 +248,23 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■ JSONのソート(使わないかも)■
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            function jsonSort(jsonList) {
-                var sort_by = function (field, reverse, primer) {
-                    reverse = (reverse) ? -1 : 1;
-                    return function (a, b) {
-                        a = a[field];
-                        b = b[field];
-                        if (typeof (primer) != 'undefined') {
-                            a = primer(a);
-                            b = primer(b);
-                        }
-                        if (a < b) return reverse * -1;
-                        if (a > b) return reverse * 1;
-                        return 0;
-                    }
-                }
-                jsonList.sort(sort_by('ORDER', true, parseInt));
-            }
+            //        function jsonSort(jsonList) {
+            //            var sort_by = function (field, reverse, primer) {
+            //                reverse = (reverse) ? -1 : 1;
+            //                return function (a, b) {
+            //                    a = a[field];
+            //                    b = b[field];
+            //                    if (typeof (primer) != 'undefined') {
+            //                        a = primer(a);
+            //                        b = primer(b);
+            //                    }
+            //                    if (a < b) return reverse * -1;
+            //                    if (a > b) return reverse * 1;
+            //                    return 0;
+            //                }
+            //            }
+            //            jsonList.sort(sort_by('ORDER', true, parseInt));
+            //        }
         });
 
 
@@ -382,7 +315,7 @@
                 <br>
                 <!--新規編集欄(仮。本当はカレントトピックの末尾とかにしたいのだけどどう作っていいか分からん…)-->
                 <!--                                <span id="new_edit"></span>-->
-                <input type="text" id="new_edit">
+                <input type="text" data-id="new_edit" class="topicText">
                 <br>
                 <!--トピック追加ボタン-->
                 <span id="addTopic">+</span>
