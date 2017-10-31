@@ -327,11 +327,21 @@
         }
 
         function appliTop() {
-            // アプリトップに移動する予定
-            // テスト用に初期状態に戻るようにしてある
             $("#main").css("display", "");
             $("#oss1").css("display", "");
             $("#oss2").css("display", "none");
+            changeVisivility(false);
+            $('#for_top')[0].click();
+        }
+        
+        function changeVisivility(select_top) {
+            if (select_top) {
+                $("#drawer_top_rect").hide();
+                $("#drawer_about_rect").show();    
+            } else {
+                $("#drawer_top_rect").show();
+                $("#drawer_about_rect").hide(); 
+            }
         }
     </script>
 </head>
@@ -370,36 +380,36 @@
                 <span id="addTopic">+</span>
                 <br>
             </div>
-            <div class="panel" id="page2" data-title="Page 2">
+            <div class="panel" id="page2" data-title="アプリについて">
                 <div id="oss1">
                     <input type="button" value="OSSライセンス" onclick="openOss()" style="display:;width:300px;height:30px;">
                     <br>
                     <br>
                 </div>
                 <div id="oss2" style="display:none">
-                    cordova
-                    <br> html5
+                    cordova<br>
+                    html5<br>
                     <br>
                 </div>
                 <!-- テスト用に初期状態に戻るようにしてある -->
                 <!-- <a href="URL" target="_blank"> -->
-                <input type="button" value="このアプリのトップに戻る" onclick="appliTop()" style="width:300px;height:30px;">
+                <input type="button" value="アプリのトップに戻る" onclick="appliTop();" style="width:300px;height:30px;">
                 <br>
             </div>
         </div>
         <nav id="left">
             <div class="view active">
                 <header>
-                    <h1>Left</h1>
+                    <h1>メニュー</h1>
                 </header>
                 <div class="pages">
                     <div class="panel active" id="navPage1" data-title="Foobar">
                         <ul class="list">
-                            <li>
-                                <a href="#main" onclick="$.afui.clearHistory()">Main Page</a>
+                            <li id="drawer_top_rect" style="display: none;">
+                                <a id="for_top" href="#main" onclick="$.afui.clearHistory(); changeVisivility(true);">アプリTOP</a>
                             </li>
-                            <li>
-                                <a href="#page2" onclick="$.afui.clearHistory()">このアプリについて</a>
+                            <li id="drawer_about_rect">
+                                <a href="#page2" onclick="$.afui.clearHistory(); changeVisivility(false);">このアプリについて</a>
                             </li>
                         </ul>
                     </div>
