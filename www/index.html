@@ -182,21 +182,24 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.topicText', function () {
 
-                var topicId = "";
-                var inputVal = "";
+                var topicId = $(this).data("id");
+                var inputVal = $(this).val();
 
                 // 新規追加の場合
                 if ($(this).data("id") == "new_edit") {
-                    if ($(this).val() != "") {
+
+                    // 入力値があればトピックの登録処理
+                    if (inputVal != "") {
+                        // ★デバッグ用 
+                        // navigator.notification.alert("入力値→" + inputVal);
                         // フォーカスアウト
                         $('#new_edit').blur(function () {
 
                             //カレントトピックが存在しないなら親、存在するならカレントトピックの子として作成する
-                            var inputVal = $(this).val();
                             // ★デバッグ用 
                             //navigator.notification.alert("inputVal" + inputVal);
                             // ★デバッグ用 
-                            // navigator.notification.alert("new_editのフォーカスアウト");
+                            //navigator.notification.alert("new_editのフォーカスアウト");
                             var existParent = false;
                             for (var i = 0; i < g_LocalStorage.length; i++) {
                                 var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
@@ -225,6 +228,7 @@
                             createTree();
                         })
                     }
+
                 } else {
                     // 既存のトピックの場合
                     if (!$(this).hasClass('on')) {
@@ -234,17 +238,15 @@
                         $(this).html('<input type="text" value="' + txt + '" />');
                     }
                     // フォーカスアウト
-                    $('.topicText > input').blur(function () {
-                            // ★デバッグ用 
-                            //navigator.notification.alert("既存トピックのフォーカスアウト");
-
-                            inputVal = $(this).val();
-                            $(this).parent().removeClass('on').text(inputVal);
-                            // 保存
-                            updateTopicText(topicId, inputVal);
-                        })
+                    $('.topicText > input').change(function () {
+                        // ★デバッグ用 
+                        //navigator.notification.alert("既存トピックのフォーカスアウト");
+                        $(this).parent().removeClass('on').text($(this).val());
+                        // 保存
+                        updateTopicText(topicId, $(this).val());
                         // 再描画
-                    createTree();
+                        createTree();
+                    })
                 }
             });
 
@@ -253,7 +255,7 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // 追加処理自体は上記の「トピックがタップされたら編集モードに」で行っているため、ここで行うのは編集欄の可視化のみ
             $('#addTopic').click(function () {
-                $('#new_edit').show();
+                $('#new_edit').show().focus();
             });
 
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
@@ -279,8 +281,9 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $('#classUp').click(function () {
                 //TODO 選択中(編集中)のトピックのIDを取得してhierarchyUpMoveの引数にする
+                // トピックを選択していない場合は機能しない
                 // ★デバッグ用 
-                navigator.notification.alert("トピックの階層を一つあげます");
+                navigator.notification.alert("トピックの階層を一つ上げます");
                 //hierarchyUpMove();
             });
 
@@ -289,6 +292,7 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $('#classDown').click(function () {
                 //TODO 選択中(編集中)のトピックのIDを取得してhierarchyUnderMoveの引数にする
+                // トピックを選択していない場合は機能しない
                 // ★デバッグ用 
                 navigator.notification.alert("トピックの階層を一つ下げます");
                 //hierarchyUnderMove();
@@ -333,14 +337,14 @@
             changeVisivility(false);
             $('#for_top')[0].click();
         }
-        
+
         function changeVisivility(select_top) {
             if (select_top) {
                 $("#drawer_top_rect").hide();
-                $("#drawer_about_rect").show();    
+                $("#drawer_about_rect").show();
             } else {
                 $("#drawer_top_rect").show();
-                $("#drawer_about_rect").hide(); 
+                $("#drawer_about_rect").hide();
             }
         }
     </script>
@@ -387,27 +391,27 @@
                     <br>
                 </div>
                 <div id="oss2" style="display:none">
+                    <br> OSSライセンス
+                    <br> -----------------------
+                    <br> Cordova 2.9.0.0
                     <br>
-                    OSSライセンス<br>
-                    -----------------------<br>
-                    Cordova 2.9.0.0<br>
+                    <br> Licensed to the Apache Software Foundation (ASF) under one
+                    <br> or more contributor license agreements. See the NOTICE file
+                    <br> distributed with this work for additional information
+                    <br> regarding copyright ownership. The ASF licenses this file
+                    <br> to you under the Apache License, Version 2.0 (the
+                    <br> "License"); you may not use this file except in compliance
+                    <br> with the License. You may obtain a copy of the License at
                     <br>
-                    Licensed to the Apache Software Foundation (ASF) under one<br>
-                    or more contributor license agreements.  See the NOTICE file<br>
-                    distributed with this work for additional information<br>
-                    regarding copyright ownership.  The ASF licenses this file<br>
-                    to you under the Apache License, Version 2.0 (the<br>
-                    "License"); you may not use this file except in compliance<br>
-                    with the License.  You may obtain a copy of the License at<br>
+                    <br> http://www.apache.org/licenses/LICENSE-2.0
                     <br>
-                     http://www.apache.org/licenses/LICENSE-2.0<br>
+                    <br> Unless required by applicable law or agreed to in writing,
+                    <br> software distributed under the License is distributed on an
+                    <br> "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+                    <br> KIND, either express or implied. See the License for the
+                    <br> specific language governing permissions and limitations
+                    <br> under the License.
                     <br>
-                    Unless required by applicable law or agreed to in writing,<br>
-                    software distributed under the License is distributed on an<br>
-                    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY<br>
-                    KIND, either express or implied.  See the License for the<br>
-                    specific language governing permissions and limitations<br>
-                    under the License.<br>
                     <br>
                 </div>
                 <!-- テスト用に初期状態に戻るようにしてある -->
