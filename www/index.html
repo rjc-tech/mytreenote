@@ -182,73 +182,80 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.topicText', function () {
 
-                var topicId = $(this).data("id");
-                var inputVal = $(this).val();
-
-                // 新規追加の場合
-                if ($(this).data("id") == "new_edit") {
-
-                    // 入力値があればトピックの登録処理
-                    if (inputVal != "") {
-                        // ★デバッグ用 
-                        // navigator.notification.alert("入力値→" + inputVal);
-                        // フォーカスアウト
-                        $('#new_edit').blur(function () {
-
-                            //カレントトピックが存在しないなら親、存在するならカレントトピックの子として作成する
-                            // ★デバッグ用 
-                            //navigator.notification.alert("inputVal" + inputVal);
-                            // ★デバッグ用 
-                            //navigator.notification.alert("new_editのフォーカスアウト");
-                            var existParent = false;
-                            for (var i = 0; i < g_LocalStorage.length; i++) {
-                                var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
-                                // カレントトピックを見つけたらそのトピックの子として作成する
-                                if (json.CURRENT_TOPIC_FLG == 1) {
-                                    topicId = createTopic(json.TOPIC_ID);
-                                    updateTopicText(topicId, inputVal);
-                                    existParent = true;
-                                    break;
-                                }
-                            }
-                            // 親がいない場合(カレントトピックがない場合)
-                            if (!existParent) {
-                                // 空のトピックを作成
-                                topicId = createParentTopic();
-                                // ★デバッグ用 
-                                // navigator.notification.alert(topicId);
-                                // 保存
-                                updateTopicText(topicId, inputVal);
-                            }
-                            // 新規追加欄を空白に
-                            $(this).val("");
-                            // 新規追加欄を非表示に
-                            $('#new_edit').hide();
-                            // 再描画
-                            createTree();
-                        })
-                    }
-
-                } else {
-                    // 既存のトピックの場合
+                if ($(this).data("id") != "new_edit") {
                     if (!$(this).hasClass('on')) {
 
                         $(this).addClass('on');
                         var txt = $(this).text();
                         $(this).html('<input type="text" value="' + txt + '" />');
                     }
-                    // フォーカスアウト
-                    $('.topicText > input').change(function () {
-                        // ★デバッグ用 
-                        //navigator.notification.alert("既存トピックのフォーカスアウト");
-                        $(this).parent().removeClass('on').text($(this).val());
-                        // 保存
-                        updateTopicText(topicId, $(this).val());
-                        // 再描画
-                        createTree();
-                    })
                 }
             });
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■新規入力欄のフォーカスアウト■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $('#new_edit').blur(function () {
+
+                // 入力値があればトピックの登録処理
+                var topicId = $(this).data("id");
+                var inputVal = $(this).val();
+
+                if (inputVal != "") {
+                    // ★デバッグ用 
+                    // navigator.notification.alert("入力値→" + inputVal);
+                    //カレントトピックが存在しないなら親、存在するならカレントトピックの子として作成する
+                    // ★デバッグ用 
+                    //navigator.notification.alert("inputVal" + inputVal);
+                    // ★デバッグ用 
+                    //navigator.notification.alert("new_editのフォーカスアウト");
+                    var existParent = false;
+                    for (var i = 0; i < g_LocalStorage.length; i++) {
+                        var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+                        // カレントトピックを見つけたらそのトピックの子として作成する
+                        if (json.CURRENT_TOPIC_FLG == 1) {
+                            topicId = createTopic(json.TOPIC_ID);
+                            updateTopicText(topicId, inputVal);
+                            existParent = true;
+                            break;
+                        }
+                    }
+                    // 親がいない場合(カレントトピックがない場合)
+                    if (!existParent) {
+                        // 空のトピックを作成
+                        topicId = createParentTopic();
+                        // ★デバッグ用 
+                        // navigator.notification.alert(topicId);
+                        // 保存
+                        updateTopicText(topicId, inputVal);
+                    }
+                    // 新規追加欄を空白に
+                    $(this).val("");
+                    // 新規追加欄を非表示に
+                    $('#new_edit').hide();
+                    // 再描画
+                    createTree();
+                }
+            });
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■既存トピックのフォーカスアウト■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $('.topicText > input').change(function () {
+                var topicId = $(this).data("id");
+                var inputVal = $(this).val();
+
+                if (topicId != "new_edit") {
+
+                    // ★デバッグ用 
+                    //navigator.notification.alert("既存トピックのフォーカスアウト");
+                    $(this).parent().removeClass('on').text(inputVal);
+                    // 保存
+                    updateTopicText(topicId, inputVal);
+                    // 再描画
+                    createTree();
+                }
+            })
 
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■          トピック追加          ■
