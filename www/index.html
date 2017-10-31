@@ -3,51 +3,341 @@
 <html>
 
 <head>
-
     <title>App Framework Kitchen Sink</title>
     <meta http-equiv="Content-type" content="text/html; charset=utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=0, minimal-ui">
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-
     <link rel="stylesheet" type="text/css" href="lib/appframework/icons.css" />
     <link rel="stylesheet" type="text/css" href="lib/appframework/af.ui.css" />
-
     <script type="text/javascript" charset="utf-8" src="lib/jquery.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
-        
+    <script type="text/javascript" charset="utf-8" src="lib/mytreenote.js"></script>
     <script src='cordova.js'></script>
 
+    <script>
+        jQuery(document).ready(function ($) {
 
+            // データの永続保存用ストレージ
+            var g_LocalStorage = localStorage;
+            // 一時リスト作成用ストレージ
+            var g_tempListStorage = sessionStorage;
+            // パンくずリスト
+            var g_topicPathList = {};
+            // トピックID一時保存用
+            var g_holdTopic;
+            // シーケンスなければ作成
+            if (!g_LocalStorage.getItem("TOPIC_ID_SEQ")) {
+                g_LocalStorage.setItem("TOPIC_ID_SEQ", 0)
+            }
+            // リスト作成
+            window.onload = function () {
+                // ツリーの作成
+                createTree();
+            }
+
+            // ■■■■■■■■■■■■■■■■■■
+            // ■  ツリーを作成する ■
+            // ■■■■■■■■■■■■■■■■■■
+            function createTree() {
+
+                // ★デバッグ用 
+                //                navigator.notification.alert("createTreeにはいった");
+
+                g_tempListStorage.clear();
+
+                // カレントトピック存在フラグ
+                var currentFlg = false;
+                for (var i = 0; i < g_LocalStorage.length; i++) {
+                    var json = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+                    // カレントトピックを見つけたらリストの作成
+                    if (json.CURRENT_TOPIC_FLG == 1) {
+
+                        var currentTopicId = json.TOPIC_ID;
+
+                        // カレントトピック配下のトピックのリストを作成していく
+                        for (var a = 0; a < g_LocalStorage.length; a++) {
+                            var childJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
+                            var childPathList = new String(childJson.PATH).split("~");
+                            // カレントトピックのトピックIDがパスに含まれていたら子トピックとして追加
+                            for (var b = 0; b < childPathList.length; b++) {
+                                if (currentTopicId == childPathList[b]) {
+                                    g_tempListStorage.setItem(g_LocalStorage.key(a), JSON.stringify(childJson));
+                                    break;
+                                }
+                            }
+                        }
+
+                        // カレントトピックの親を取得しパンくずリストを作成
+                        g_topicPathList = {};
+
+                        var parentPathList = new String(json.PATH).split("~");
+
+                        for (var a = 0; a < g_LocalStorage.length; a++) {
+                            var parentJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(a)));
+                            // 親トピックをリストに追加
+                            for (var b = 0; b < parentPathList.length; b++) {
+                                if (parentJson.TOPIC_ID == parentPathList[b]) {
+                                    g_topicPathList[g_LocalStorage.key(a)] = JSON.stringify(parentJson);
+                                    break;
+                                }
+                            }
+                        }
+                        // カレントトピックの作成
+                        document.getElementById('currentTopic').innerHTML = '<span class="topicText" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span>';
+                        currentFlg = true;
+                        break;
+                    }
+                }
+                // カレントトピックが存在しない場合は全てのトピックのリストを作成
+                if (!currentFlg) {
+                    for (var i = 0; i < g_LocalStorage.length; i++) {
+                        var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
+                        g_tempListStorage.setItem(localStorage.key(i), JSON.stringify(json));
+                    }
+                }
+
+                //上記で作成した一時リストに保存されているデータからツリーを作成する
+
+                // --------------ツリー本体ここから--------------
+                var resultTree = "";
+                if (g_tempListStorage.length > 0) {
+                    resultTree = "<ul>";
+                }
+                // 保存されているデータの数だけループしリスト作成
+                for (var i = 0; i < g_tempListStorage.length; i++) {
+                    var k = g_tempListStorage.key(i);
+                    var json = JSON.parse(g_tempListStorage.getItem(k));
+
+                    // トピックが展開中か折り畳み中かによって黒丸の表示を変える
+                    var topicSircle = "◎";
+                    if (json.OPEN_FLG == 1) {
+                        topicSircle = "・";
+                    }
+
+                    // インデント調整
+                    var jsonPathList = new String(json.PATH).split("~");
+                    resultTree +=
+                        '<li style="padding-left:' + (jsonPathList.length - 1) * 10 + 'px"><span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + topicSircle + '</span><span class="topicText" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span></li>';
+
+                }
+                if (resultTree != "") {
+                    resultTree += "</ul>";
+                }
+                // リスト表示
+                document.getElementById("show_result").innerHTML = resultTree;
+                // --------------ツリー本体ここまで--------------
+
+                // --------------パンくずリストここから--------------
+                // 保存されているデータの数だけループしリスト作成。最初に「home」を追加し、カレントなしの状態に戻れるようにする
+                var resultTopic = '<span class="moveTopic" data-id="home">home</span>';
+                for (var key in g_topicPathList) {
+                    var json = JSON.parse(g_topicPathList[key]);
+                    resultTopic += '<span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + "　</span>";
+                }
+                // リスト表示
+                document.getElementById("topicPathList").innerHTML = resultTopic;
+                // --------------パンくずリストここまで--------------
+            }
+
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■タップした丸点orパンくずリストのトピックをカレントトピックにする■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $(document).on('click', '.moveTopic', function () {
+
+
+                // 現在カレントトピックフラグが1になっているデータを0に更新する
+                for (var i = 0; i < g_LocalStorage.length; i++) {
+                    var otherJson = JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)));
+
+                    if (otherJson.CURRENT_TOPIC_FLG == "1") {
+                        otherJson.CURRENT_TOPIC_FLG = "0";
+                        g_LocalStorage.setItem(otherJson.TOPIC_ID, JSON.stringify(otherJson));
+                        break;
+                    }
+                }
+                // idが"home"でない場合は、カレントトピックフラグを更新
+                if ($(this).data("id") != "home") {
+
+                    // トピックIDをキーに、タップされた該当のトピックのカレントトピックフラグを1に更新
+                    var topicId = $(this).data("id");
+                    var json = JSON.parse(g_LocalStorage.getItem(topicId));
+
+                    json.CURRENT_TOPIC_FLG = "1";
+                    g_LocalStorage.setItem(topicId, JSON.stringify(json));
+                }
+                // カレントトピックの作成
+                document.getElementById('currentTopic').innerHTML = '';
+                currentFlg = true;
+                createTree();
+            });
+
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■トピックがタップされたら編集モードに■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            $(document).on('click', '.topicText', function () {
+
+                var topicId = "";
+                var inputVal = "";
+
+                // 新規追加の場合
+                if ($(this).data("id") == "new_edit") {
+                    // 空のトピックを作成
+                    topicId = createParentTopic();
+
+                    // フォーカスアウト
+                    $('#new_edit').change(function () {
+
+                        // ★デバッグ用 
+                        navigator.notification.alert("new_editのフォーカスアウト");
+
+                        inputVal = $(this).val();
+                        $(this).text("");
+                        // 保存
+                        updateTopicText(topicId, inputVal);
+                        // 再描画
+                        createTree();
+                    })
+
+                } else {
+                    // 既存のトピックの場合
+                    if (!$(this).hasClass('on')) {
+
+                        $(this).addClass('on');
+                        var txt = $(this).text();
+                        $(this).html('<input type="text" value="' + txt + '" />');
+                    }
+                    // フォーカスアウト
+                    $('.topicText > input').change(function () {
+                        // ★デバッグ用 
+                        navigator.notification.alert("既存トピックのフォーカスアウト");
+
+                        inputVal = $(this).val();
+                        $(this).parent().removeClass('on').text(inputVal);
+                        // 保存
+                        updateTopicText(topicId, inputVal);
+                        // 再描画
+                        createTree();
+                    })
+                }
+            });
+
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■          トピック削除          ■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // 長押しを検知してトピックを削除
+            $(document).on('touchstart', '.moveTopic', function () {
+                timerid = setTimeout(function () {　　
+                    // ポップアップで削除可否を確認
+                    if (!confirm('削除します。よろしいですか？')) {
+                        // キャンセル
+                        return false;
+                    } else {
+                        //　OK
+                        deleteTopic($(this).data("id"));
+                    }
+                }, 750);
+            });
+
+
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■ JSONのソート(使わないかも)■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            //        function jsonSort(jsonList) {
+            //            var sort_by = function (field, reverse, primer) {
+            //                reverse = (reverse) ? -1 : 1;
+            //                return function (a, b) {
+            //                    a = a[field];
+            //                    b = b[field];
+            //                    if (typeof (primer) != 'undefined') {
+            //                        a = primer(a);
+            //                        b = primer(b);
+            //                    }
+            //                    if (a < b) return reverse * -1;
+            //                    if (a > b) return reverse * 1;
+            //                    return 0;
+            //                }
+            //            }
+            //            jsonList.sort(sort_by('ORDER', true, parseInt));
+            //        }
+        });
+
+
+        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+        // ■ このアプリについて             ■
+        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+        function openOss() {
+            $("#main").css("display", "none");
+            $("#oss1").css("display", "none");
+            $("#oss2").css("display", "");
+        }
+
+        function appliTop() {
+            // アプリトップに移動する予定
+            // テスト用に初期状態に戻るようにしてある
+            $("#main").css("display", "");
+            $("#oss1").css("display", "");
+            $("#oss2").css("display", "none");
+        }
+    </script>
 </head>
 
 <body>
-    <div id="splashscreen" class='ui-loader heavy'>
-        App Framework
+    <div id="splashscreen" class='ui-loader heavy'>App Framework
         <br>
         <br>
         <span class='ui-icon ui-icon-loading spin'></span>
         <h1>Starting app</h1>
     </div>
-
     <div class="view splitview">
-        
         <header>
             <a class="menuButton" data-left-menu="left" data-transition="cover" style="float:left"></a>
             <h1>Title</h1>
         </header>
-        
         <div class="pages">
             <div class="panel" id="main" data-title="Main" data-selected="true">
-                This is main page
+                <!--階層を上げたり下げたりするボタン-->
+                <span id="classUp">↑</span><span id="classDown">↓</span>
+                <br>
+                <!--パンくずリスト-->
+                <span id="topicPathList"></span>
+                <br>
+                <!--カレントトピック-->
+                <span id="currentTopic" style="font-size:large"></span>
+                <br>
+                <!--リスト本体-->
+                <span id="show_result"></span>
+                <br>
+                <!--新規編集欄(仮。本当はカレントトピックの末尾とかにしたいのだけどどう作っていいか分からん…)-->
+                <!--                                <span id="new_edit"></span>-->
+                <input type="text" data-id="new_edit" class="topicText">
+                <br>
+                <!--トピック追加ボタン-->
+                <span id="addTopic">+</span>
+                <br>
             </div>
             <div class="panel" id="page2" data-title="Page 2">
-                This is Page 2
+                <div id="oss1">
+                    <input type="button" value="OSSライセンス" onclick="openOss()" style="display:;width:300px;height:30px;">
+                    <br>
+                    <br>
+                </div>
+                <div id="oss2" style="display:none">
+                    cordova
+                    <br> html5
+                    <br>
+                </div>
+                <!-- テスト用に初期状態に戻るようにしてある -->
+                <!-- <a href="URL" target="_blank"> -->
+                <input type="button" value="このアプリのトップに戻る" onclick="appliTop()" style="width:300px;height:30px;">
+                <br>
             </div>
         </div>
-
         <nav id="left">
             <div class="view active">
                 <header>
@@ -56,14 +346,17 @@
                 <div class="pages">
                     <div class="panel active" id="navPage1" data-title="Foobar">
                         <ul class="list">
-                            <li><a href="#main" onclick="$.afui.clearHistory()">Main Page</a></li>
-                            <li><a href="#page2" onclick="$.afui.clearHistory()">Page Two</a></li>
+                            <li>
+                                <a href="#main" onclick="$.afui.clearHistory()">Main Page</a>
+                            </li>
+                            <li>
+                                <a href="#page2" onclick="$.afui.clearHistory()">このアプリについて</a>
+                            </li>
                         </ul>
                     </div>
                 </div>
             </div>
         </nav>
-
     </div>
 </body>
 
