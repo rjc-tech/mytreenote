@@ -39,6 +39,30 @@
                 createTree();
             }
 
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■ JSONのソート■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            var sort_by = function (prop_name, reverse, primer) {
+
+                reverse = (reverse) ? -1 : 1;
+                return function (a, b) {
+                    a = a[prop_name];
+                    b = b[prop_name];
+
+                    if (typeof (primer) != 'undefined') {
+                        a = primer(a);
+                        b = primer(b);
+                        //                        // ★デバッグ用 
+                        //                        navigator.notification.alert("a→" + a);
+                        //                        // ★デバッグ用 
+                        //                        navigator.notification.alert("b→" + b);
+                    }
+                    if (a < b) return reverse * -1;
+                    if (a > b) return reverse * 1;
+                    return 0;
+                }
+            }
+
             // ■■■■■■■■■■■■■■■■■■
             // ■  ツリーを作成する ■
             // ■■■■■■■■■■■■■■■■■■
@@ -94,9 +118,21 @@
                 }
                 // カレントトピックが存在しない場合は全てのトピックのリストを作成
                 if (!currentFlg) {
+
+                    // ソートするため、LocalStorageのデータを一旦json形式のオブジェクトに格納
+                    var jsonList = []
                     for (var i = 0; i < g_LocalStorage.length; i++) {
-                        var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
-                        g_tempListStorage.setItem(localStorage.key(i), JSON.stringify(json));
+                        jsonList.push(
+                            JSON.parse(g_LocalStorage.getItem(g_LocalStorage.key(i)))
+                        )
+                    }
+                    // ソートの実行
+                    //jsonList.sort(sort_by('PARENT_TOPIC_ID', false, parseInt));
+                    jsonList.sort(sort_by('ORDER', false, parseInt));
+
+                    // ソート結果を一時リスト作成用ストレージへ格納
+                    for (var i in jsonList) {
+                        g_tempListStorage.setItem(jsonList[i].TOPIC_ID, JSON.stringify(jsonList[i]));
                     }
                 }
 
@@ -312,28 +348,6 @@
                     }
                 }, 750);
             });
-
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■ JSONのソート(使わないかも)■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            //        function jsonSort(jsonList) {
-            //            var sort_by = function (field, reverse, primer) {
-            //                reverse = (reverse) ? -1 : 1;
-            //                return function (a, b) {
-            //                    a = a[field];
-            //                    b = b[field];
-            //                    if (typeof (primer) != 'undefined') {
-            //                        a = primer(a);
-            //                        b = primer(b);
-            //                    }
-            //                    if (a < b) return reverse * -1;
-            //                    if (a > b) return reverse * 1;
-            //                    return 0;
-            //                }
-            //            }
-            //            jsonList.sort(sort_by('ORDER', true, parseInt));
-            //        }
         });
 
 
