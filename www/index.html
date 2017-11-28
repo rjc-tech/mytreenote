@@ -136,7 +136,7 @@
                 var resultTopic = '<span class="moveTopic" data-id="home">home</span>';
                 for (var key in g_topicPathList) {
                     var json = JSON.parse(g_topicPathList[key]);
-                    resultTopic += '<span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + "　</span>";
+                    resultTopic += '&nbsp;<span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + "</span>";
                 }
                 // リスト表示
                 document.getElementById("topicPathList").innerHTML = resultTopic;
@@ -160,9 +160,13 @@
                         break;
                     }
                 }
-                // idが"home"でない場合は、カレントトピックフラグを更新
-                if ($(this).data("id") != "home") {
 
+                // idが"home"ならばパンくずリストを初期化
+                if ($(this).data("id") == "home") {
+                    g_topicPathList = {};
+
+                } else {
+                    // idが"home"でない場合は、カレントトピックフラグを更新。
                     // トピックIDをキーに、タップされた該当のトピックのカレントトピックフラグを1に更新
                     var topicId = $(this).data("id");
                     var json = JSON.parse(g_LocalStorage.getItem(topicId));
@@ -170,6 +174,7 @@
                     json.CURRENT_TOPIC_FLG = "1";
                     g_LocalStorage.setItem(topicId, JSON.stringify(json));
                 }
+
                 // カレントトピックの作成
                 document.getElementById('currentTopic').innerHTML = '';
                 currentFlg = true;
@@ -182,19 +187,63 @@
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $(document).on('click', '.topicText', function () {
 
-                if ($(this).data("id") != "new_edit") {
+                var selectTopicId = $(this).data("id")
+                    // ★デバッグ用 
+                    //navigator.notification.alert("selectTopicId→" + selectTopicId);
+
+                if (selectTopicId != "new_edit") {
                     if (!$(this).hasClass('on')) {
 
                         $(this).addClass('on');
                         var txt = $(this).text();
-                        $(this).html('<input type="text" value="' + txt + '" />');
+                        $(this).html('<input type="text" class="topicText" value="' + txt + '" />');
+
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        // ■既存トピックのフォーカスアウト(内容の保存)■
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        $('.topicText > input').change(function () {
+
+                            var inputVal = $(this).val();
+                            // ★デバッグ用 
+                            //navigator.notification.alert("既存トピックのフォーカスアウト");
+                            $(this).parent().removeClass('on').text(inputVal);
+                            // 保存
+                            updateTopicText(selectTopicId, inputVal);
+                            // 再描画
+                            createTree();
+
+                        })
+
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        // ■          階層上げ             ■
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        $('#classUp').click(function () {
+                            // トピックを選択していない場合は機能しない
+                            // ★デバッグ用 
+                            // navigator.notification.alert("トピックの階層を一つ上げます" + selectTopicId);
+                            hierarchyUpMove(selectTopicId);
+                            // 再描画
+                            createTree();
+                        });
+
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        // ■          階層下げ             ■
+                        // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+                        $('#classDown').click(function () {
+                            // トピックを選択していない場合は機能しない
+                            // ★デバッグ用 
+                            // navigator.notification.alert("トピックの階層を一つ下げます" + selectTopicId);
+                            hierarchyUnderMove(selectTopicId);
+                            // 再描画
+                            createTree();
+                        });
                     }
                 }
             });
 
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■新規入力欄のフォーカスアウト■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
+            // ■新規入力欄のフォーカスアウト(トピックの作成)■
+            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             $('#new_edit').blur(function () {
 
                 // 入力値があればトピックの登録処理
@@ -238,24 +287,6 @@
                 }
             });
 
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■既存トピックのフォーカスアウト■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $('.topicText > input').change(function () {
-                var topicId = $(this).data("id");
-                var inputVal = $(this).val();
-
-                if (topicId != "new_edit") {
-
-                    // ★デバッグ用 
-                    //navigator.notification.alert("既存トピックのフォーカスアウト");
-                    $(this).parent().removeClass('on').text(inputVal);
-                    // 保存
-                    updateTopicText(topicId, inputVal);
-                    // 再描画
-                    createTree();
-                }
-            })
 
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■          トピック追加          ■
@@ -282,28 +313,6 @@
                 }, 750);
             });
 
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■          階層上げ          ■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $('#classUp').click(function () {
-                //TODO 選択中(編集中)のトピックのIDを取得してhierarchyUpMoveの引数にする
-                // トピックを選択していない場合は機能しない
-                // ★デバッグ用 
-                navigator.notification.alert("トピックの階層を一つ上げます");
-                //hierarchyUpMove();
-            });
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■          階層下げ          ■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            $('#classDown').click(function () {
-                //TODO 選択中(編集中)のトピックのIDを取得してhierarchyUnderMoveの引数にする
-                // トピックを選択していない場合は機能しない
-                // ★デバッグ用 
-                navigator.notification.alert("トピックの階層を一つ下げます");
-                //hierarchyUnderMove();
-            });
 
             // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
             // ■ JSONのソート(使わないかも)■
@@ -383,7 +392,7 @@
                 <!--リスト本体-->
                 <span id="show_result"></span>
                 <br>
-                <!--新規編集欄(仮。本当はカレントトピックの末尾とかにしたいのだけどどう作っていいか分からん…)-->
+                <!--新規編集欄-->
                 <!--                                <span id="new_edit"></span>-->
                 <input type="text" id="new_edit" data-id="new_edit" class="topicText" style="display:none">
                 <br>
