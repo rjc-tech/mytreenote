@@ -15,6 +15,7 @@
     <script type="text/javascript" charset="utf-8" src="lib/fastclick.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/appframework/appframework.ui.min.js"></script>
     <script type="text/javascript" charset="utf-8" src="lib/mytreenote.js"></script>
+    <script type="text/javascript" charset="utf-8" src="lib/sqlite.js"></script>
     <script src='cordova.js'></script>
 
     <script>
@@ -94,9 +95,17 @@
                 }
                 // カレントトピックが存在しない場合は全てのトピックのリストを作成
                 if (!currentFlg) {
-                    for (var i = 0; i < g_LocalStorage.length; i++) {
-                        var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
-                        g_tempListStorage.setItem(localStorage.key(i), JSON.stringify(json));
+                    // 全トピックを取得
+                    var topicList = queryGetAllTree();
+                    //                    for (var i = 0; i < g_LocalStorage.length; i++) {
+                    //                        var json = JSON.parse(g_LocalStorage.getItem(localStorage.key(i)));
+                    //                        g_tempListStorage.setItem(localStorage.key(i), JSON.stringify(json));
+                    //                    }
+                    for (var i in topicList) {
+                        // ★デバッグ用 
+                        navigator.notification.alert(topicList.item(i));
+                        //                        var json = topicList.item(i);
+                        //                        g_tempListStorage.setItem(json.TOPIC_ID, JSON.stringify(json));
                     }
                 }
 
@@ -312,28 +321,6 @@
                     }
                 }, 750);
             });
-
-
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            // ■ JSONのソート(使わないかも)■
-            // ■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■
-            //        function jsonSort(jsonList) {
-            //            var sort_by = function (field, reverse, primer) {
-            //                reverse = (reverse) ? -1 : 1;
-            //                return function (a, b) {
-            //                    a = a[field];
-            //                    b = b[field];
-            //                    if (typeof (primer) != 'undefined') {
-            //                        a = primer(a);
-            //                        b = primer(b);
-            //                    }
-            //                    if (a < b) return reverse * -1;
-            //                    if (a > b) return reverse * 1;
-            //                    return 0;
-            //                }
-            //            }
-            //            jsonList.sort(sort_by('ORDER', true, parseInt));
-            //        }
         });
 
 
