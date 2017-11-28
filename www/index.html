@@ -18,6 +18,51 @@
     <script src='cordova.js'></script>
 
     <script>
+        $(window).load(function(){
+
+          // ＋－ボタン開閉用
+          $(function () {
+            $('.PMButton').nextAll().hide();
+            // ボタン押下時
+            $('.PMButton').click(function () {
+              var moveTopic  = ".moveTopic" + this.id;
+              var topicText  = ".topicText" + this.id;
+              // トピックが閉じられている場合
+              if ($(this).nextAll(topicText).is(':hidden')) {
+                $(this).nextAll(moveTopic).slideDown();
+                $(this).nextAll(topicText).slideDown();
+                $(this).nextAll('.PMButton').slideDown();
+                $(this).text('-');
+              // トピックが開けられている場合
+              } else {
+                $(this).nextAll(moveTopic).slideUp();
+                $(this).nextAll(topicText).slideUp();
+                $(this).nextAll('.PMButton').slideUp();
+                $(this).text('+');
+              }
+            });
+          });
+
+ 
+           // ALLボタン開閉用
+          $(function () {
+            $('.AllButton').nextAll().hide();
+            // ボタン押下時
+            $('.AllButton').click(function () {
+              // トピックが閉じられている場合
+              if ($(this).nextAll().is(':hidden')) {
+                $(this).nextAll().slideDown();
+                $(this).text('ALL-');
+              // トピックが開けられている場合
+              } else {
+                $(this).nextAll().slideUp();
+                $(this).text('ALL+');
+              }
+            });
+          });
+ 
+        });
+        
         jQuery(document).ready(function ($) {
 
             // データの永続保存用ストレージ
@@ -120,10 +165,65 @@
 
                     // インデント調整
                     var jsonPathList = new String(json.PATH).split("~");
-                    resultTree +=
-                        '<li style="padding-left:' + (jsonPathList.length - 1) * 10 + 'px"><span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + topicSircle + '</span><span class="topicText" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span></li>';
+                    console.log(json.PATH);
+                    
+//                    resultTree +=
+//                        '<li style="padding-left:' + (jsonPathList.length - 1) * 10 + 'px"><span class="moveTopic" data-id="' + json.TOPIC_ID + '">' + topicSircle + '</span><span class="topicText" data-id="' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span></li>';
+                    
+                    // 吉田 start--------------
+                    // カレントトピック確認
+                    if(1){
+                        resultTree +='<li>';
+                    }
 
+                    console.log(json);
+                    
+                    // 子トピックの開閉ボタンをつける
+                    // 開閉ボタン機能(行に＋/－付与)
+                    var paddingCount = (jsonPathList.length - 1) * 10;
+                    
+                    console.log(jsonPathList);
+                    
+                    var topicId　= 1;
+                    if(paddingCount == 10){
+                        
+                        console.log(paddingCount);
+                        
+                        if(chiledTopicCount >= 2){
+                            // 親トピックである
+                            for(var i = 0; i < chiledTopicCount; i++){
+                                topicId = i + 1;
+                                paddingCount = (i + 1)　* 10;
+                                resultTree +=
+                                    '<span style="padding-left:' + paddingCount + 'px"><span class="moveTopic' + topicId + '"data-id=' + json.TOPIC_ID + '>' + topicSircle + '</span>';
+                                resultTree +=
+                                    '<span style="padding-left:' + paddingCount + 'px"><span class="topicText' + topicId + '"data-id=' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span>';
+                                resultTree +='<span style="padding-left:' + paddingCount + 'px" class="PMButton topic-id=' + topicId + ' " >'
+                                    + ' - </span>';
+                            }
+                            chiledTopicCount = 1;
+                        }else{
+                            // 親トピックまたは子トピックである
+                            topicId = 1;
+                            paddingCount = 10;
+                            resultTree +=
+                                '<span style="padding-left:' + paddingCount + 'px"><span class="moveTopic' + json.TOPIC_ID + '"data-id=' + json.TOPIC_ID + '>' + topicSircle + '</span>';
+                            resultTree +=
+                                '<span style="padding-left:' + paddingCount + 'px"><span class="topicText' + json.TOPIC_ID + '"data-id=' + json.TOPIC_ID + '">' + json.TOPIC_TEXT + '</span>';
+                            resultTree +='<span style="padding-left:' + paddingCount + 'px" class="PMButton topic-id=' + topicId + ' " >'
+                                + ' - </span>';
+                        }
+                    }else if(paddingCount >= 20){
+                        // 子トピックである
+                        chiledTopicCount++;
+                    }
+                    if(1){
+                        resultTree +='</li>';
+                    }
+                    
+                    // -------------- end
                 }
+                
                 if (resultTree != "") {
                     resultTree += "</ul>";
                 }
